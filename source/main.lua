@@ -73,6 +73,19 @@ local function isEnoughNutrients(checkArg)
 	}
 end 
 
+local function switch(value)
+  -- Handing `cases` to the returned function allows the `switch()` function to be used with a syntax closer to c code (see the example below).
+  -- This is because lua allows the parentheses around a table type argument to be omitted if it is the only argument.
+  return function(cases)
+    local f = cases[value]
+    if (f) then
+      f()
+    end
+  end
+end
+
+
+
 local function nextLevel()
     level = level + 1
     if level > maxLevel then
@@ -83,13 +96,14 @@ local function nextLevel()
 
     -- set the background image and other level-specific properties
 	if level == 1 then
-        local backgroundImage = gfx.image.new(getLevelToImage())
+        local backgroundImage = gfx.image.new("images/spacebackground")
         assert(backgroundImage)
         gfx.sprite.setBackgroundDrawingCallback(
             function(x, y, width, height)
                 backgroundImage:draw(0, 0)
             end
         )
+
 		--specific starting locations for first level
 		playerSprite:moveTo(300,200)
 		dogSprite:moveTo(315,125)
@@ -108,13 +122,6 @@ local function nextLevel()
 		local y = math.random(50, 150)
 		dogSprite:moveTo(x,y)
 
-		local backgroundImage = gfx.image.new(getLevelToImage())
-			assert(backgroundImage)
-			gfx.sprite.setBackgroundDrawingCallback(
-			function(x, y, width, height)
-				backgroundImage:draw(0, 0)
-				end
-			)
 			-- add new obstacles or enemies for this level
 		elseif level == 5 then
 
