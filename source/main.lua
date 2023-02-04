@@ -27,7 +27,7 @@ nutrients = 100
 treeNutrientsMin = 50
 movementNutrientsMin = 1
 
-weakRockStr = 3
+weakRockStr = 2
 mediumRockStr = 7
 strongRockStr = 15
 
