@@ -1,0 +1,8 @@
+bin/
+obj/
+CoreLibs/
+*.cbp.save
+*.depend
+*.layout
+*.layout.save
+*build_log*
