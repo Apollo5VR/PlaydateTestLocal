@@ -45,7 +45,13 @@ gridviewSprite:moveTo(8, 40)
 gridviewSprite:add()
 local gridviewImage = gfx.image.new(400, 240)
 
-local rootLeadingImage
+local rootLeadingImageUp
+local rootLeadingImageRight
+local rootLeadingImageDown
+local rootLeadingImageLeft
+
+local rootImageVertical
+local rootImageHorizontal
 
 --used for stopping grid draw when collision
 canMove = true
@@ -174,8 +180,13 @@ local function initialize()
 		rootLeadingSprite.remove(rootLeadingSprite)
 	end
 
-	rootLeadingImage = gfx.image.new("images/Pando/Cells/Root/Root_Leading_Generic")
-	rootLeadingSprite = gfx.sprite.new(rootLeadingImage)
+	rootLeadingImageUp = gfx.image.new("images/Pando/Cells/Root/Root_Leading_Up_01")
+	rootLeadingImageRight = gfx.image.new("images/Pando/Cells/Root/Root_Leading_Right_01")
+	rootLeadingImageDown = gfx.image.new("images/Pando/Cells/Root/Root_Leading_Down_01")
+	rootLeadingImageLeft = gfx.image.new("images/Pando/Cells/Root/Root_Leading_Left_01")
+	rootImageVertical = gfx.image.new("images/Pando/Cells/Root/Root_Vertical_01")
+	rootImageHorizontal = gfx.image.new("images/Pando/Cells/Root/Root_Horizontal_01")
+	rootLeadingSprite = gfx.sprite.new(rootLeadingImageUp)
 	rootLeadingSprite:setCollideRect(0,0,rootLeadingSprite:getSize())
 	rootLeadingSprite:add()
 
@@ -206,7 +217,12 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
     gfx.drawRect(x, y, width, height)
 
 	if selected then
-		rootLeadingImage:draw(x, y) --TODO we need something to draw the post rotations
+		if(rootLeadingSprite:getImage() == rootLeadingImageUp or rootLeadingSprite:getImage() == rootLeadingImageDown) then
+			rootImageVertical:draw(x, y) --TODO we need something to draw the post rotations	
+		else	
+			rootImageHorizontal:draw(x, y)
+		end
+
 		--gfx.fillRect(x, y, width, height)
 		rootLeadingSprite:moveWithCollisions(x + 8, y + 40)
 		--rootLeadingSprite:moveTo(x + 8, y + 40) --offset of grid in screen
@@ -232,9 +248,9 @@ local function isPressedMove()
 	end
 
 	if playdate.buttonIsPressed( playdate.kButtonUp ) then
-		gridview:selectPreviousRow(true)
+		gridview:selectPreviousRow(false)
 	elseif playdate.buttonIsPressed(playdate.kButtonDown) then
-		gridview:selectNextRow(true)
+		gridview:selectNextRow(false)
 	elseif playdate.buttonIsPressed(playdate.kButtonLeft) then
 		gridview:selectPreviousColumn(false)
 	elseif playdate.buttonIsPressed(playdate.kButtonRight) then
@@ -244,17 +260,17 @@ end
 
 local function isPressedRotate()
 	if playdate.buttonIsPressed( playdate.kButtonUp ) then
-		rootLeadingSprite:setSize(1, 1)
-		rootLeadingSprite:setRotation(0)
+		rootLeadingSprite:setImage(rootLeadingImageUp)
+		--rootLeadingSprite:setRotation(0)
 	elseif playdate.buttonIsPressed(playdate.kButtonDown) then
-		rootLeadingSprite:setSize(1, 1)
-		rootLeadingSprite:setRotation(180)
+		rootLeadingSprite:setImage(rootLeadingImageDown)
+		--rootLeadingSprite:setRotation(180)
 	elseif playdate.buttonIsPressed(playdate.kButtonLeft) then
-		rootLeadingSprite:setSize(1, 1)
-		rootLeadingSprite:setRotation(270)
+		rootLeadingSprite:setImage(rootLeadingImageLeft)
+		--rootLeadingSprite:setRotation(270)
 	elseif playdate.buttonIsPressed(playdate.kButtonRight) then
-		rootLeadingSprite:setSize(1, 1)
-		rootLeadingSprite:setRotation(90)
+		rootLeadingSprite:setImage(rootLeadingImageRight)
+		--rootLeadingSprite:setRotation(90)
 	end
 end
 
@@ -265,7 +281,6 @@ function playdate.update()
 	playdate.timer.updateTimers()
 	--gridview:drawInRect(8, 48, 400, 240)
 
-	isPressedRotate()
 
 	--crank ticks basically means during each update will give you a return value of 1 as the crank 
 	--turns past each 120 degree increment. (Since we passed in a 6, each tick represents 360 ÷ 3 = 120 degrees.) 
@@ -286,7 +301,7 @@ function playdate.update()
 		--gridview:drawCell()
     end
 
-	canMove = true
+	isPressedRotate()
 
 	if gridview.needsDisplay then
         gfx.pushContext(gridviewImage)
