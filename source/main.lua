@@ -2,6 +2,8 @@ import "CoreLibs/object"
 import "CoreLibs/graphics"
 import "CoreLibs/sprites"
 import "CoreLibs/timer"
+import "CoreLibs/ui"
+import "CoreLibs/crank"
 
 local gfx<const> = playdate.graphics
 local playerSprite = nil
@@ -31,6 +33,23 @@ weakRockStr = 2
 mediumRockStr = 7
 strongRockStr = 15
 
+local gridview = playdate.ui.gridview.new(24,24)
+
+gridview:setNumberOfColumns(16)
+gridview:setNumberOfRows(8)
+--gridview:setCellPadding(0, 0, -2, -2)
+
+local gridviewSprite = gfx.sprite.new()
+gridviewSprite:setCenter(0, 0)
+gridviewSprite:moveTo(8, 40)
+gridviewSprite:add()
+local gridviewImage = gfx.image.new(400, 240)
+
+local dogImage
+
+--controls which image is grabbed next in the anim sequence
+rootState = 0;
+
 
 local function resetTimer()
 	playTimer = playdate.timer.new(playTime, playTime, 0, playdate.easingFunctions.linear)
@@ -38,13 +57,16 @@ end
 
 --TODO replace the image file locations for the root variations
 local function getNextRootVariation()
-	if level == 1 then
+	if rootState == 0 then
+		rootState += 1
 		return "images/castlebackground"
 	end
-	if level == 2 then
+	if rootState == 1 then
+		rootState += 1
 		return "images/spacebackground"
 	end
-	if level == 3 then
+	if rootState == 2 then
+		rootState = 0
 		return "images/desertbackground"
 	end
 end
@@ -96,6 +118,7 @@ local function nextLevel()
 
     -- set the background image and other level-specific properties
 	if level == 1 then
+		--[[
         local backgroundImage = gfx.image.new("images/spacebackground")
         assert(backgroundImage)
         gfx.sprite.setBackgroundDrawingCallback(
@@ -103,6 +126,7 @@ local function nextLevel()
                 backgroundImage:draw(0, 0)
             end
         )
+		--]]
 
 		--specific starting locations for first level
 		playerSprite:moveTo(300,200)
@@ -147,8 +171,9 @@ local function initialize()
 		dogSprite.remove(dogSprite)
 	end
 
-	local dogImage = gfx.image.new("images/allSprites/dog")
+	dogImage = gfx.image.new("images/allSprites/dog")
 	dogSprite = gfx.sprite.new(dogImage)
+	dogSprite:setCenter(0, 0)
 	dogSprite:setCollideRect(0,0,dogSprite:getSize())
 	dogSprite:add()
 
@@ -159,6 +184,7 @@ local function initialize()
 
 	local playerImage = gfx.image.new("images/allSprites/player")
 	assert( playerImage )
+	dogSprite:setCenter(0, 0)
 	playerSprite = gfx.sprite.new(playerImage)
 	playerSprite:setCollideRect(0,0,playerSprite:getSize())
 	playerSprite:add()
@@ -172,8 +198,74 @@ end
 
 initialize()
 
+--use this to draw the root in the cell
+local gfx = playdate.graphics
+function gridview:drawCell(section, row, column, selected, x, y, width, height)
+    gfx.drawRect(x, y, width, height)
+
+	if selected then
+		dogImage:draw(x, y)
+		--gfx.fillRect(x, y, width, height)
+		dogSprite:moveTo(x + 8,y + 40) 
+		--playerSprite:drawInRect(x, y, width, height)
+        --gfx.drawCircleInRect(x, y, width+4, height+4)
+		--dogSprite:drawInRect(x, y, width, height)
+    end
+    --local cellText = ""..row.."-"..column
+    --gfx.drawTextInRect(cellText, x, y+14, width, 20, nil, nil, kTextAlignment.center)
+end
+
+--TODO - add sprite rotation here sprite:setRotation(angle, [scale, [yScale]])
+local function isPressedMove()
+	if playdate.buttonIsPressed( playdate.kButtonUp ) then
+		gridview:selectPreviousRow(true)
+	elseif playdate.buttonIsPressed(playdate.kButtonDown) then
+		gridview:selectNextRow(true)
+	elseif playdate.buttonIsPressed(playdate.kButtonLeft) then
+		gridview:selectPreviousColumn(false)
+	elseif playdate.buttonIsPressed(playdate.kButtonRight) then
+		gridview:selectNextColumn(false)
+	end
+end
+
+
 function playdate.update()
+	
 	gfx.sprite.update()
+	playdate.timer.updateTimers()
+	--gridview:drawInRect(8, 48, 400, 240)
+
+
+	--crank ticks basically means during each update will give you a return value of 1 as the crank 
+	--turns past each 120 degree increment. (Since we passed in a 6, each tick represents 360 ÷ 3 = 120 degrees.) 
+	--TODO will need to adjust crank tick param (smaller value requires more rotation) for barriers / rocks
+	local crankTicks = playdate.getCrankTicks(3)
+    if crankTicks == 1 then
+			--TODO how to disable moving forward if at bottom of grid, it currently goes to top
+        isPressedMove()
+		--TODO decrement nutrients count here by X
+		nutrients -= 1
+	elseif crankTicks == -1 then
+		--TODO will need some kind of logic that erases print in existing row...tricky, then below
+		--gridview:selectPreviousColumn(false)
+		--gridview:selectPreviousRow(false)
+	elseif crankTicks == (1/3) then
+		--TODO art
+		getNextRootVariation()
+		gridview:drawCell()
+    end
+
+	if gridview.needsDisplay then
+        gfx.pushContext(gridviewImage)
+            gridview:drawInRect(0, 0, 400, 240)
+    		gfx.popContext() --this might be what we can do to "go backwards"
+        gridviewSprite:setImage(gridviewImage)
+    end
+
+	gfx.drawText("Nutrients: " .. nutrients, 45, 0)
+
+
+	--[[
 	
 	if (playTimer.value == 0) or dogGotBone then
 		gfx.drawText("'A' to for next level. Time: " ..endTime, 45, 210)
@@ -226,6 +318,7 @@ function playdate.update()
 	if hasBone then
 		gfx.drawText("You picked up bone", 120, 5)
 	end
+	--]]
 end
 
 
