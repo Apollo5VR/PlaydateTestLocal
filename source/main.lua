@@ -22,11 +22,22 @@ dogGotBone = false
 level = 0
 maxLevel = 5
 
+--pando vars
+nutrients = 100
+treeNutrientsMin = 50
+movementNutrientsMin = 1
+
+weakRockStr = 3
+mediumRockStr = 7
+strongRockStr = 15
+
+
 local function resetTimer()
 	playTimer = playdate.timer.new(playTime, playTime, 0, playdate.easingFunctions.linear)
 end
 
-local function getLevelToImage()
+--TODO replace the image file locations for the root variations
+local function getNextRootVariation()
 	if level == 1 then
 		return "images/castlebackground"
 	end
@@ -36,13 +47,31 @@ local function getLevelToImage()
 	if level == 3 then
 		return "images/desertbackground"
 	end
-	if level == 4 then
-		return "images/oceanbackground"
-	end
-	if level == 5 then
-		return "images/forestbackground"
-	end
 end
+
+--1 check treeMinimum, 2 check movementMinimum, etc
+local function isEnoughNutrients(checkArg)	
+	switch (checkArg) {
+		[1] = function()
+			if nutrients < treeNutrientsMin then
+				-- can not build a tree, TODO notify user
+
+				return false
+			else
+				return true
+			end
+		end,
+		[2] = function()
+			if nutrients < movementNutrientsMin then
+				-- game over, TODO show a message or go to the main menu
+
+				return false
+			else
+				return true
+			end
+		end
+	}
+end 
 
 local function nextLevel()
     level = level + 1
