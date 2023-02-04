@@ -22,11 +22,22 @@ dogGotBone = false
 level = 0
 maxLevel = 5
 
+--pando vars
+nutrients = 100
+treeNutrientsMin = 50
+movementNutrientsMin = 1
+
+weakRockStr = 2
+mediumRockStr = 7
+strongRockStr = 15
+
+
 local function resetTimer()
 	playTimer = playdate.timer.new(playTime, playTime, 0, playdate.easingFunctions.linear)
 end
 
-local function getLevelToImage()
+--TODO replace the image file locations for the root variations
+local function getNextRootVariation()
 	if level == 1 then
 		return "images/castlebackground"
 	end
@@ -36,13 +47,44 @@ local function getLevelToImage()
 	if level == 3 then
 		return "images/desertbackground"
 	end
-	if level == 4 then
-		return "images/oceanbackground"
-	end
-	if level == 5 then
-		return "images/forestbackground"
-	end
 end
+
+--1 check treeMinimum, 2 check movementMinimum, etc
+local function isEnoughNutrients(checkArg)	
+	switch (checkArg) {
+		[1] = function()
+			if nutrients < treeNutrientsMin then
+				-- can not build a tree, TODO notify user
+
+				return false
+			else
+				return true
+			end
+		end,
+		[2] = function()
+			if nutrients < movementNutrientsMin then
+				-- game over, TODO show a message or go to the main menu
+
+				return false
+			else
+				return true
+			end
+		end
+	}
+end 
+
+local function switch(value)
+  -- Handing `cases` to the returned function allows the `switch()` function to be used with a syntax closer to c code (see the example below).
+  -- This is because lua allows the parentheses around a table type argument to be omitted if it is the only argument.
+  return function(cases)
+    local f = cases[value]
+    if (f) then
+      f()
+    end
+  end
+end
+
+
 
 local function nextLevel()
     level = level + 1
@@ -54,13 +96,14 @@ local function nextLevel()
 
     -- set the background image and other level-specific properties
 	if level == 1 then
-        local backgroundImage = gfx.image.new(getLevelToImage())
+        local backgroundImage = gfx.image.new("images/spacebackground")
         assert(backgroundImage)
         gfx.sprite.setBackgroundDrawingCallback(
             function(x, y, width, height)
                 backgroundImage:draw(0, 0)
             end
         )
+
 		--specific starting locations for first level
 		playerSprite:moveTo(300,200)
 		dogSprite:moveTo(315,125)
@@ -79,13 +122,6 @@ local function nextLevel()
 		local y = math.random(50, 150)
 		dogSprite:moveTo(x,y)
 
-		local backgroundImage = gfx.image.new(getLevelToImage())
-			assert(backgroundImage)
-			gfx.sprite.setBackgroundDrawingCallback(
-			function(x, y, width, height)
-				backgroundImage:draw(0, 0)
-				end
-			)
 			-- add new obstacles or enemies for this level
 		elseif level == 5 then
 
