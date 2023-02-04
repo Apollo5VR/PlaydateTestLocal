@@ -8,7 +8,7 @@ import "CoreLibs/crank"
 local gfx<const> = playdate.graphics
 local playerSprite = nil
 
-local dogSprite = nil
+local rootLeadingSprite = nil
 
 local boneSprite = nil
 
@@ -45,7 +45,10 @@ gridviewSprite:moveTo(8, 40)
 gridviewSprite:add()
 local gridviewImage = gfx.image.new(400, 240)
 
-local dogImage
+local rootLeadingImage
+
+--used for stopping grid draw when collision
+canMove = true
 
 --controls which image is grabbed next in the anim sequence
 rootState = 0;
@@ -130,7 +133,7 @@ local function nextLevel()
 
 		--specific starting locations for first level
 		playerSprite:moveTo(300,200)
-		dogSprite:moveTo(315,125)
+		--rootLeadingSprite:moveTo(315,125)
 		boneSprite:moveTo(80,190)
 
 	elseif level > 1 then		
@@ -144,7 +147,7 @@ local function nextLevel()
 		boneSprite:moveTo(x,y)
 		local x = math.random(100, 300)
 		local y = math.random(50, 150)
-		dogSprite:moveTo(x,y)
+		--rootLeadingSprite:moveTo(x,y)
 
 			-- add new obstacles or enemies for this level
 		elseif level == 5 then
@@ -167,15 +170,14 @@ local function initialize()
 		playerSprite.remove(playerSprite)
 	end
 
-	if(dogSprite == nil) == false then
-		dogSprite.remove(dogSprite)
+	if(rootLeadingSprite == nil) == false then
+		rootLeadingSprite.remove(rootLeadingSprite)
 	end
 
-	dogImage = gfx.image.new("images/allSprites/dog")
-	dogSprite = gfx.sprite.new(dogImage)
-	dogSprite:setCenter(0, 0)
-	dogSprite:setCollideRect(0,0,dogSprite:getSize())
-	dogSprite:add()
+	rootLeadingImage = gfx.image.new("images/Pando/Cells/Root/Root_Leading_Generic")
+	rootLeadingSprite = gfx.sprite.new(rootLeadingImage)
+	rootLeadingSprite:setCollideRect(0,0,rootLeadingSprite:getSize())
+	rootLeadingSprite:add()
 
 	local boneImage = gfx.image.new("images/allSprites/bone")
 	boneSprite = gfx.sprite.new(boneImage)
@@ -184,7 +186,7 @@ local function initialize()
 
 	local playerImage = gfx.image.new("images/allSprites/player")
 	assert( playerImage )
-	dogSprite:setCenter(0, 0)
+	rootLeadingSprite:setCenter(0, 0)
 	playerSprite = gfx.sprite.new(playerImage)
 	playerSprite:setCollideRect(0,0,playerSprite:getSize())
 	playerSprite:add()
@@ -204,9 +206,10 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
     gfx.drawRect(x, y, width, height)
 
 	if selected then
-		dogImage:draw(x, y)
+		rootLeadingImage:draw(x, y) --TODO we need something to draw the post rotations
 		--gfx.fillRect(x, y, width, height)
-		dogSprite:moveTo(x + 8,y + 40) 
+		rootLeadingSprite:moveWithCollisions(x + 8, y + 40)
+		--rootLeadingSprite:moveTo(x + 8, y + 40) --offset of grid in screen
 		--playerSprite:drawInRect(x, y, width, height)
         --gfx.drawCircleInRect(x, y, width+4, height+4)
 		--dogSprite:drawInRect(x, y, width, height)
@@ -215,8 +218,19 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
     --gfx.drawTextInRect(cellText, x, y+14, width, 20, nil, nil, kTextAlignment.center)
 end
 
+--TODO add the option for "overlap" here for nutrients
+function rootLeadingSprite:collisionResponse(other)
+	--TODO some can move bool
+	canMove = false
+	return "freeze"
+end
+
 --TODO - add sprite rotation here sprite:setRotation(angle, [scale, [yScale]])
 local function isPressedMove()
+	if canMove == false then
+		return
+	end
+
 	if playdate.buttonIsPressed( playdate.kButtonUp ) then
 		gridview:selectPreviousRow(true)
 	elseif playdate.buttonIsPressed(playdate.kButtonDown) then
@@ -228,6 +242,22 @@ local function isPressedMove()
 	end
 end
 
+local function isPressedRotate()
+	if playdate.buttonIsPressed( playdate.kButtonUp ) then
+		rootLeadingSprite:setSize(1, 1)
+		rootLeadingSprite:setRotation(0)
+	elseif playdate.buttonIsPressed(playdate.kButtonDown) then
+		rootLeadingSprite:setSize(1, 1)
+		rootLeadingSprite:setRotation(180)
+	elseif playdate.buttonIsPressed(playdate.kButtonLeft) then
+		rootLeadingSprite:setSize(1, 1)
+		rootLeadingSprite:setRotation(270)
+	elseif playdate.buttonIsPressed(playdate.kButtonRight) then
+		rootLeadingSprite:setSize(1, 1)
+		rootLeadingSprite:setRotation(90)
+	end
+end
+
 
 function playdate.update()
 	
@@ -235,6 +265,7 @@ function playdate.update()
 	playdate.timer.updateTimers()
 	--gridview:drawInRect(8, 48, 400, 240)
 
+	isPressedRotate()
 
 	--crank ticks basically means during each update will give you a return value of 1 as the crank 
 	--turns past each 120 degree increment. (Since we passed in a 6, each tick represents 360 ÷ 3 = 120 degrees.) 
@@ -252,8 +283,10 @@ function playdate.update()
 	elseif crankTicks == (1/3) then
 		--TODO art
 		getNextRootVariation()
-		gridview:drawCell()
+		--gridview:drawCell()
     end
+
+	canMove = true
 
 	if gridview.needsDisplay then
         gfx.pushContext(gridviewImage)
