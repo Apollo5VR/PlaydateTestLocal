@@ -1,0 +1,3 @@
+--controls creating the 8x16 (24x24 spaces) grid
+--controls instantiating barriers and nutrients
+--keeps list of the barriers and nutrients instantiated

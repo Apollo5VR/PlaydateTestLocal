@@ -1,0 +1,2 @@
+--keeps track of how much nutrients a player has
+--maybe move check for Mins here
