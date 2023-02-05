@@ -28,10 +28,12 @@ maxLevel = 5
 nutrients = 100
 treeNutrientsMin = 50
 movementNutrientsMin = 1
+nutrientsCost = 1
 
+noBarrierStr = 1
 weakRockStr = 2
-mediumRockStr = 7
-strongRockStr = 15
+mediumRockStr = 5
+strongRockStr = 10
 
 local gridview = playdate.ui.gridview.new(24,24)
 
@@ -52,6 +54,23 @@ local rootLeadingImageLeft
 
 local rootImageVertical
 local rootImageHorizontal
+local rootImage_LeftDown
+local rootImage_RightDown
+local rootImage_UpLeft
+local rootImage_UpRight
+local dirtImage
+
+--for reseting to a cell before overlap
+local previousSection;
+local previousRowsArray = {}
+local previousColumnsArray = {}
+
+local previousX0
+local previousX1
+local previousY0
+local previousY1
+
+local crankDifficulty = 1;
 
 --used for stopping grid draw when collision
 canMove = true
@@ -186,6 +205,11 @@ local function initialize()
 	rootLeadingImageLeft = gfx.image.new("images/Pando/Cells/Root/Root_Leading_Left_01")
 	rootImageVertical = gfx.image.new("images/Pando/Cells/Root/Root_Vertical_01")
 	rootImageHorizontal = gfx.image.new("images/Pando/Cells/Root/Root_Horizontal_01")
+	rootImage_LeftDown = gfx.image.new("images/Pando/Cells/Root/Root_Corner_LeftDown_01")
+	rootImage_RightDown = gfx.image.new("images/Pando/Cells/Root/Root_Corner_RightDown_01")
+	rootImage_UpLeft = gfx.image.new("images/Pando/Cells/Root/Root_Corner_UpLeft_01")
+	rootImage_UpRight = gfx.image.new("images/Pando/Cells/Root/Root_Corner_UpRight_01")
+	dirtImage = gfx.image.new("images/Pando/Cells/Dirt/Dirt_01")
 	rootLeadingSprite = gfx.sprite.new(rootLeadingImageUp)
 	rootLeadingSprite:setCollideRect(0,0,rootLeadingSprite:getSize())
 	rootLeadingSprite:add()
@@ -194,6 +218,14 @@ local function initialize()
 	boneSprite = gfx.sprite.new(boneImage)
 	boneSprite:setCollideRect(0,0,boneSprite:getSize())
 	boneSprite:add()
+
+	local stoneWeakImage = gfx.image.new("images/Pando/Cells/Rock/Stone_Weak_01")
+	stoneSprite = gfx.sprite.new(stoneWeakImage)
+	--stoneSprite:setCollideRect(0,0,stoneSprite:getSize())
+	stoneSprite:add()
+	
+
+	
 
 	local playerImage = gfx.image.new("images/allSprites/player")
 	assert( playerImage )
@@ -211,65 +243,175 @@ end
 
 initialize()
 
+--start the player in middle of grid
+local section, row, column = gridview:getSelection()
+previousSection = section
+previousX0 = 120
+previousX1 = 120
+previousY0 = 200
+previousY1 = 200
+gridview:setSelection(section, 4, 8)
+
+--TODO than random values between grid size for spawning barriers and nutrients,using drawCell specifying the row column
+
 --use this to draw the root in the cell
 local gfx = playdate.graphics
 function gridview:drawCell(section, row, column, selected, x, y, width, height)
-    gfx.drawRect(x, y, width, height)
-
+	--math.randomseed(playdate.getSecondsSinceEpoch())
+	--randomVal = math.random(0, 100)
 	if selected then
-		if(rootLeadingSprite:getImage() == rootLeadingImageUp or rootLeadingSprite:getImage() == rootLeadingImageDown) then
-			rootImageVertical:draw(x, y) --TODO we need something to draw the post rotations	
-		else	
-			rootImageHorizontal:draw(x, y)
+		--rootLeadingSprite:moveWithCollisions(x + 8, y + 40) --offset of grid in screen
+		rootLeadingSprite:moveTo(x + 8, y + 40) --offset of grid in screen
+		--gfx.fillRect(x, y, width, height)
+		
+		--TODO - use this to set can move, and if can not move, then reset position/selected to previous[1]
+		local collisions = rootLeadingSprite:overlappingSprites()
+		if(#collisions >=1) then
+			--TODO increment nutrients
+			nutrients += 3
+			if collisions[0] == boneSprite or collisions[1] == boneSprite then
+
+			elseif (hasBone == true) and (collisions[0] == dogSprite or collisions[1] == dogSprite) then
+
+			else	
+				gfx.drawText("Keep Cranking!", 120, 25)
+			end
 		end
 
-		--gfx.fillRect(x, y, width, height)
-		rootLeadingSprite:moveWithCollisions(x + 8, y + 40)
-		--rootLeadingSprite:moveTo(x + 8, y + 40) --offset of grid in screen
-		--playerSprite:drawInRect(x, y, width, height)
-        --gfx.drawCircleInRect(x, y, width+4, height+4)
-		--dogSprite:drawInRect(x, y, width, height)
-    end
-    --local cellText = ""..row.."-"..column
-    --gfx.drawTextInRect(cellText, x, y+14, width, 20, nil, nil, kTextAlignment.center)
+		--dont draw if player cant actually move
+		--if(canMove) then
+			--if(rootLeadingSprite:getImage() == rootLeadingImageUp or rootLeadingSprite:getImage() == rootLeadingImageDown) then
+				--rootImageVertical:draw(x, y) --TODO we need something to draw the curve rotations	
+			--else	
+				--rootImageHorizontal:draw(x, y)
+			--end
+		--end
+
+		--use previous values to determine image to draw in previous cell
+		--should be 8 combos + the straight vert / hori
+		
+		if((x > previousX0 and x == previousX1 and y < previousY0 and y < previousY1) or (y > previousY0 and y == previousY1 and x < previousX0 and x < previousX1)) then --or (x < previousX0 and x < previousX1 and y < previousY0 and y < previousY1))
+			-- in cell [1] draw Root_Corner_RightDown_01
+			rootImage_UpRight:draw(previousX1, previousY1)
+		elseif((x < previousX0 and x == previousX1 and y > previousY0 and y > previousY1) or (y < previousY0 and y == previousY1 and x > previousX0 and x > previousX1)) then
+			--in cell [1] Root_Corner_UpRight_01
+			rootImage_LeftDown:draw(previousX1, previousY1)
+		elseif((x > previousX0 and x == previousX1 and y > previousY0 and y > previousY1) or (y < previousY0 and y == previousY1 and x < previousX0 and x < previousX1)) then
+			--in cell [1] Root_Corner_LeftDown_01
+			rootImage_RightDown:draw(previousX1, previousY1)
+		elseif((x < previousX0 and x == previousX1 and y < previousY0 and y < previousY1) or (y > previousY0 and y == previousY1 and x > previousX0 and x > previousX1)) then
+			--in cell [1] Root_Corner_UpLeft_01
+			rootImage_UpLeft:draw(previousX1, previousY1)
+		elseif((x > previousX1 or x < previousX1)) then
+			--in cell [1] Root_Vertical_01
+			rootImageHorizontal:draw(previousX1, previousY1)
+		elseif(y > previousY1 or y < previousY1) then
+			--in cell [1] Root_Horizontal_01
+			rootImageVertical:draw(previousX1, previousY1)
+		end
+
+		
+		--TODO i want these to all be different values
+		print("x: " ..x .. "x1: "  ..previousX1.. "x0: "  ..previousX0 .. "y: " ..y .. "y1: "  ..previousY1.. "y0: "  ..previousY0)
+
+		--cache previous values
+		previousSection = section
+
+		previousX0 = previousX1
+		previousY0 = previousY1
+		previousX1 = x
+		previousY1 = y
+
+
+
+
+    --elseif randomVal > 98 then
+		--randomly instantiate rock
+		--instantiate rock
+		--instantiate nutrients
+		--print("random happened" .. randomVal)
+		--stoneSprite:moveTo(x, y)
+	
+	else
+		dirtImage:draw(x, y)
+	end
 end
 
 --TODO add the option for "overlap" here for nutrients
 function rootLeadingSprite:collisionResponse(other)
+	--if other:isA(Barrier) then
+		--return "freeze"
+	--elseif other:isA(Nutrients) then
+		--return "overlap"
+	--else
+		--return "freeze"
+	--end
 	--TODO some can move bool
-	canMove = false
-	return "freeze"
-end
+	--canMove = false
+	--return "overlap"
+	end
 
 --TODO - add sprite rotation here sprite:setRotation(angle, [scale, [yScale]])
+local buttonLastPressed = playdate.kButtonUp
 local function isPressedMove()
 	if canMove == false then
-		return
+		print("can not move")
+		--return
 	end
 
-	if playdate.buttonIsPressed( playdate.kButtonUp ) then
-		gridview:selectPreviousRow(false)
-	elseif playdate.buttonIsPressed(playdate.kButtonDown) then
-		gridview:selectNextRow(false)
-	elseif playdate.buttonIsPressed(playdate.kButtonLeft) then
-		gridview:selectPreviousColumn(false)
-	elseif playdate.buttonIsPressed(playdate.kButtonRight) then
-		gridview:selectNextColumn(false)
+	if playdate.buttonJustPressed( playdate.kButtonUp ) then
+		buttonLastPressed = playdate.kButtonUp
+		--gridview:selectPreviousRow(false)
+	elseif playdate.buttonJustPressed(playdate.kButtonDown) then
+		buttonLastPressed = playdate.kButtonDown
+		--gridview:selectNextRow(false)
+	elseif playdate.buttonJustPressed(playdate.kButtonLeft) then
+		buttonLastPressed = playdate.kButtonLeft
+		--gridview:selectPreviousColumn(false)
+	elseif playdate.buttonJustPressed(playdate.kButtonRight) then
+		buttonLastPressed = playdate.kButtonRight
+		--gridview:selectNextColumn(false)
 	end
+end
+
+local function doMove()
+	if canMove == false then
+		print("can not move")
+		--return
+	end
+
+	switch (buttonLastPressed) {
+		[playdate.kButtonUp] = function()
+			gridview:selectPreviousRow(false)
+		end,
+		[playdate.kButtonDown] = function()
+			gridview:selectNextRow(false)
+		end,
+		[playdate.kButtonLeft] = function()
+			gridview:selectPreviousColumn(false)
+		end,
+		[playdate.kButtonRight] = function()
+			gridview:selectNextColumn(false)
+		end,
+	}
 end
 
 local function isPressedRotate()
 	if playdate.buttonIsPressed( playdate.kButtonUp ) then
 		rootLeadingSprite:setImage(rootLeadingImageUp)
+		buttonLastPressed = playdate.kButtonUp
 		--rootLeadingSprite:setRotation(0)
 	elseif playdate.buttonIsPressed(playdate.kButtonDown) then
 		rootLeadingSprite:setImage(rootLeadingImageDown)
+		buttonLastPressed = playdate.kButtonDown
 		--rootLeadingSprite:setRotation(180)
 	elseif playdate.buttonIsPressed(playdate.kButtonLeft) then
 		rootLeadingSprite:setImage(rootLeadingImageLeft)
+		buttonLastPressed = playdate.kButtonLeft
 		--rootLeadingSprite:setRotation(270)
 	elseif playdate.buttonIsPressed(playdate.kButtonRight) then
 		rootLeadingSprite:setImage(rootLeadingImageRight)
+		buttonLastPressed = playdate.kButtonRight
 		--rootLeadingSprite:setRotation(90)
 	end
 end
@@ -283,32 +425,39 @@ function playdate.update()
 
 
 	--crank ticks basically means during each update will give you a return value of 1 as the crank 
-	--turns past each 120 degree increment. (Since we passed in a 6, each tick represents 360 ÷ 3 = 120 degrees.) 
+	--turns past each 120 degree increment. (Since we passed in a 3, each tick represents 360 ÷ 3 = 120 degrees.) 
 	--TODO will need to adjust crank tick param (smaller value requires more rotation) for barriers / rocks
-	local crankTicks = playdate.getCrankTicks(3)
+	--higher number is easier
+	crankDifficulty = 1 / nutrientsCost
+	local crankTicks = playdate.getCrankTicks(crankDifficulty)
     if crankTicks == 1 then
 			--TODO how to disable moving forward if at bottom of grid, it currently goes to top
-        isPressedMove()
+        --isPressedMove()
+		doMove()
+		if gridview.needsDisplay then
+			gfx.pushContext(gridviewImage)
+				gridview:drawInRect(0, 0, 400, 240)
+				gfx.popContext() --this might be what we can do to "go backwards"
+			gridviewSprite:setImage(gridviewImage)
+		end
 		--TODO decrement nutrients count here by X
-		nutrients -= 1
-	elseif crankTicks == -1 then
+		nutrients -= nutrientsCost
+
+		--reset the cranks required to walking, until another barrier hit
+		nutrientsCost = noBarrierStr
+	--elseif crankTicks == -1 then
 		--TODO will need some kind of logic that erases print in existing row...tricky, then below
 		--gridview:selectPreviousColumn(false)
 		--gridview:selectPreviousRow(false)
-	elseif crankTicks == (1/3) then
+	--elseif crankTicks == (1/3) then
 		--TODO art
-		getNextRootVariation()
+		--getNextRootVariation()
 		--gridview:drawCell()
-    end
+	
+	end
 
 	isPressedRotate()
 
-	if gridview.needsDisplay then
-        gfx.pushContext(gridviewImage)
-            gridview:drawInRect(0, 0, 400, 240)
-    		gfx.popContext() --this might be what we can do to "go backwards"
-        gridviewSprite:setImage(gridviewImage)
-    end
 
 	gfx.drawText("Nutrients: " .. nutrients, 45, 0)
 
