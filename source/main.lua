@@ -321,7 +321,7 @@ local function isPressedMove()
 	end
 end
 
---local collisionSound = playdate.sound.sampleplayer.new("audio/Pando_Audio/password-infinity-123276")
+--local collisionSound = playdate.sound.sampleplayer.new("audio/Pando_Audio/Pando_Audio/SFX/Mp3/Rock Break True")
 local function doMove()
 	local collisions = rootLeadingSprite:overlappingSprites()
 	if(#collisions >=1) then	
@@ -339,7 +339,7 @@ local function doMove()
 			return
 		elseif (collisions[1]:getTag() == 1) then
 			--TODO remove magic numbers
-			nutrientsCount += 10
+			nutrientsCount += 5
 			collisions[1].remove(collisions[1])
 			--collisionSound:play()
 		else	
@@ -380,8 +380,8 @@ local function isPressedRotate()
 end
 
 function startScreenLaunch()
-	--mySound = playdate.sound.fileplayer.new("audio/Pando_Audio/password-infinity-123276")
-	--mySound:play()
+	mySound = playdate.sound.fileplayer.new("audio/Pando_Audio/Pando_Audio/Music/Mp3/Pando Title Screen")
+	mySound:play()
 
 	assert(backgroundImage)
 	gfx.sprite.setBackgroundDrawingCallback(
