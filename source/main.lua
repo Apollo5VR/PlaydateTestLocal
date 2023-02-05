@@ -193,10 +193,6 @@ local function initialize()
 		boneSprite.remove(boneSprite)
 	end
 
-	--if(brokenRockSprite == nil) == false then
-		--brokenRockSprite.remove(brokenRockSprite)
-	--end
-
 	if(rootLeadingSprite == nil) == false then
 		rootLeadingSprite.remove(rootLeadingSprite)
 	end
@@ -235,7 +231,15 @@ local function initialize()
 	brokenRockSprite:moveTo(120,120)
 	brokenRockSprite:add()
 
-	nextLevel()
+	--nextLevel()
+	
+	local backgroundImage = gfx.image.new("images/Pando/Cells/Dirt/Dirt_02")
+	assert(backgroundImage)
+	gfx.sprite.setBackgroundDrawingCallback(
+		function(x, y, width, height)
+			backgroundImage:draw(8, 24)
+		end
+	)
 
 	resetTimer()
 end
