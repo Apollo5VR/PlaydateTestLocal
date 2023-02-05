@@ -23,7 +23,7 @@ maxLevel = 5
 
 --pando vars
 local rootLeadingSprite = nil
-nutrientsCount = 10
+nutrientsCount = 100
 treeNutrientsMin = 50
 movementNutrientsMin = 1
 nutrientsCost = 1
