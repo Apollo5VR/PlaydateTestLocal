@@ -413,7 +413,7 @@ local function doMove()
 				nutrientsCost = 3
 				print("nutrients set to 3")
 				gfx.drawText("Keep Cranking!", 120, 25)
-				brokenRockSprite:moveTo(collisions[1].x, collisions[1].y) -- need 8 and 24?
+				--brokenRockSprite:moveTo(collisions[1].x, collisions[1].y) -- need 8 and 24?
 				collisions[1].remove(collisions[1])
 				--TODO not getting remove because its getting reinstantiated onMove
 				--TODO instantiate new broken that deletes on leave?
