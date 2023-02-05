@@ -11,7 +11,9 @@ local nutrients
 function nurtients:init(x, y)
 local nutrientImage = gfx.image.new("images/Pando/Cells/Nutrients/Nutrients_Medium_01.png") 
 	nutrientSprite = gfx.sprite.new(nutrientImage)
+	nutrientSprite:setCenter(0,0)
 	nutrientSprite:setCollideRect(0,0,nutrientSprite:getSize())
     nutrientSprite:moveTo(x, y)
+	nutrientSprite:setTag(1)
 	nutrientSprite:add()
 end
