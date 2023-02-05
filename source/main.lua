@@ -10,8 +10,6 @@ import "barrier"
 
 local gfx<const> = playdate.graphics
 
-local rootLeadingSprite = nil
-
 local boneSprite = nil
 
 playerSpeed = 5;
@@ -20,13 +18,11 @@ playTimer = nil
 playTime = 15 * 1000
 endTime = 0
 
-hasBone = false
-dogGotBone = false
-
 level = 0
 maxLevel = 5
 
 --pando vars
+local rootLeadingSprite = nil
 nutrientsCount = 100
 treeNutrientsMin = 50
 movementNutrientsMin = 1
@@ -41,7 +37,6 @@ local gridview = playdate.ui.gridview.new(24,24)
 
 gridview:setNumberOfColumns(16)
 gridview:setNumberOfRows(9)
---gridview:setCellPadding(0, 0, -2, -2)
 
 local gridviewSprite = gfx.sprite.new()
 gridviewSprite:setCenter(0, 0)
@@ -62,11 +57,8 @@ local rootImage_UpLeft
 local rootImage_UpRight
 local dirtImage
 
---for reseting to a cell before overlap
+--vars to help chose the image we should print in root trail
 local previousSection;
-local previousRowsArray = {}
-local previousColumnsArray = {}
-
 local previousX0
 local previousX1
 local previousY0
@@ -74,17 +66,11 @@ local previousY1
 
 local crankDifficulty = 1;
 
---used for stopping grid draw when collision
-canMove = true
-
---controls which image is grabbed next in the anim sequence
-rootState = 0;
-
-
 local function resetTimer()
 	playTimer = playdate.timer.new(playTime, playTime, 0, playdate.easingFunctions.linear)
 end
 
+--TODO unused, refactor to use appropriately
 local gameState = 0
 function incrementGameState()
 	gameState += 1
@@ -96,7 +82,7 @@ function incrementGameState()
 	end
 end
 
---TODO replace the image file locations for the root variations
+--TODO relocate / organize
 local gameplay = 2
 local function getBackgroundImage()
 	--intro image
@@ -138,6 +124,7 @@ local function isEnoughNutrients(checkArg)
 	}
 end 
 
+--helper function to replicate switchcase
 local function switch(value)
   -- Handing `cases` to the returned function allows the `switch()` function to be used with a syntax closer to c code (see the example below).
   -- This is because lua allows the parentheses around a table type argument to be omitted if it is the only argument.
@@ -149,8 +136,6 @@ local function switch(value)
   end
 end
 
-
-
 local function nextLevel()
     level = level + 1
     if level > maxLevel then
@@ -161,45 +146,11 @@ local function nextLevel()
 
     -- set the background image and other level-specific properties
 	if level == 1 then
-		--[[
-        local backgroundImage = gfx.image.new("images/spacebackground")
-        assert(backgroundImage)
-        gfx.sprite.setBackgroundDrawingCallback(
-            function(x, y, width, height)
-                backgroundImage:draw(0, 0)
-            end
-        )
-		--]]
-
-		--specific starting locations for first level
-		brokenRockSprite:moveTo(300,200)
-		--rootLeadingSprite:moveTo(315,125)
-		boneSprite:moveTo(80,190)
-
-	elseif level > 1 then		
-		--randomize position
-		math.randomseed(playdate.getSecondsSinceEpoch())
-		local x = math.random(100, 300)
-		local y = math.random(50, 150)
-		--brokenRockSprite:moveTo(x,y)
-		local x = math.random(100, 300)
-		local y = math.random(50, 150)
-		boneSprite:moveTo(x,y)
-		local x = math.random(100, 300)
-		local y = math.random(50, 150)
-		--rootLeadingSprite:moveTo(x,y)
-
-			-- add new obstacles or enemies for this level
-		elseif level == 5 then
-
-			--restart level sequence
-			level = 0
-		end
+	
+	end
 end
 
 local function initialize()
-	hasBone = false
-	dogGotBone = false
 	endTime = 0
 
 	if (boneSprite == nil) == false then
@@ -210,6 +161,7 @@ local function initialize()
 		rootLeadingSprite.remove(rootLeadingSprite)
 	end
 
+	--root configuratitons
 	rootLeadingImageUp = gfx.image.new("images/Pando/Cells/Root/Root_Leading_Up_01")
 	rootLeadingImageRight = gfx.image.new("images/Pando/Cells/Root/Root_Leading_Right_01")
 	rootLeadingImageDown = gfx.image.new("images/Pando/Cells/Root/Root_Leading_Down_01")
@@ -220,7 +172,7 @@ local function initialize()
 	rootImage_RightDown = gfx.image.new("images/Pando/Cells/Root/Root_Corner_RightDown_01")
 	rootImage_UpLeft = gfx.image.new("images/Pando/Cells/Root/Root_Corner_UpLeft_01")
 	rootImage_UpRight = gfx.image.new("images/Pando/Cells/Root/Root_Corner_UpRight_01")
-	dirtImage = gfx.image.new("images/Pando/Cells/Dirt/Dirt_01")
+	
 	rootLeadingSprite = gfx.sprite.new(rootLeadingImageUp)
 	rootLeadingSprite:setCollideRect(0,0,rootLeadingSprite:getSize())
 	rootLeadingSprite:setCenter(0, 0)
@@ -244,13 +196,10 @@ local function initialize()
 	brokenRockSprite:moveTo(120,120)
 	brokenRockSprite:add()
 
+	--TODO - for future gameplay
 	--nextLevel()
-
-	resetTimer()
+	--resetTimer()
 end
-
-
---initialize()
 
 --start the player in middle of grid
 local section, row, column = gridview:getSelection()
@@ -261,8 +210,7 @@ previousY0 = 200
 previousY1 = 200
 gridview:setSelection(section, 4, 8)
 
---TODO than random values between grid size for spawning barriers and nutrients,using drawCell specifying the row column
-
+--TODO relocate these vars / clean up
 --use this to draw the root in the cell
 local gfx = playdate.graphics
 local runOnce = 0
@@ -270,28 +218,13 @@ local nutrientTimes = 7
 local barrierTimes = 3
 local runNutrientsEveryX = nutrientTimes
 local runBarrierEveryX = barrierTimes
+--random values between grid size for spawning barriers and nutrients,using drawCell specifying the row column
 function gridview:drawCell(section, row, column, selected, x, y, width, height)
-	--TODO too heavy to have here
+	--TODO too heavy to have here, if use need coroutine or other location
 	--math.randomseed(playdate.getSecondsSinceEpoch())
 	--randomVal = math.random(0, 100)
 	if selected then
-		--rootLeadingSprite:moveWithCollisions(x + 8, y + 40) --offset of grid in screen
-		--gfx.fillRect(x, y, width, height)
-		
-		--TODO collision check was originally here
-
-		--dont draw if player cant actually move
-		--if(canMove) then
-			--if(rootLeadingSprite:getImage() == rootLeadingImageUp or rootLeadingSprite:getImage() == rootLeadingImageDown) then
-				--rootImageVertical:draw(x, y) --TODO we need something to draw the curve rotations	
-			--else	
-				--rootImageHorizontal:draw(x, y)
-			--end
-		--end
-
-		--use previous values to determine image to draw in previous cell
-		--should be 8 combos + the straight vert / hori
-		
+		--use previous values to determine image to draw in previous cell	
 		if((x > previousX0 and x == previousX1 and y < previousY0 and y < previousY1) or (y > previousY0 and y == previousY1 and x < previousX0 and x < previousX1)) then --or (x < previousX0 and x < previousX1 and y < previousY0 and y < previousY1))
 			-- in cell [1] draw Root_Corner_RightDown_01
 			rootImage_UpRight:draw(previousX1, previousY1)
@@ -312,13 +245,10 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 			rootImageVertical:draw(previousX1, previousY1)
 		end
 
-		
-		--TODO i want these to all be different values
 		print("x: " ..x .. "x1: "  ..previousX1.. "x0: "  ..previousX0 .. "y: " ..y .. "y1: "  ..previousY1.. "y0: "  ..previousY0)
 
 		--cache previous values
 		previousSection = section
-
 		previousX0 = previousX1
 		previousY0 = previousY1
 		previousX1 = x
@@ -326,9 +256,7 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 		
 		rootLeadingSprite:moveTo(x + 8, y + 24) --offset of grid in screen
 		--if you got here it means you cranked enough on the new settings
-		--TODO decrement nutrients count here by X
 		nutrientsCount -= nutrientsCost
-
 		--reset the cranks required to walking, until another barrier hit
 		nutrientsCost = noBarrierStr
 		print("nutrients returned to 1")
@@ -336,7 +264,14 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 
 	elseif (row == 9) then
 		--once its gotten through the grid on load (last row), dont run instantiate for items
-		runOnce = 1			
+		runOnce = 1	
+		--TODO sidewalk barrier, if break, present tree
+	elseif (row == 0) then
+		if runOnce == 1 then
+			return
+		end
+		--once its gotten through the grid on load (last row), dont run instantiate for items
+		barrier(x + 8, y + 24)	
     else
 		if runOnce == 1 then
 			return
@@ -358,67 +293,38 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 			barrier(x + 8, y + 24)
 			print("spawned random barrier" ..row .. column)
 		end
-		--randomly instantiate rock
-		--instantiate rock
-		--instantiate nutrients
-		--print("random happened" .. randomVal)
-		--stoneSprite:moveTo(x, y)
-		--nurtients(x + 8, y + 24)
-		--print("spawned random" ..row .. column)
+	--note: manual alternative if looking to revert to full control
 	--elseif (row == 3 and column == 9) or (row == 8 and column == 3) then
 		--if runOnce == 1 then
 			--return
 		--end
 		--table.insert(barrier(x + 8, y + 24), #barrier)
 	end
+	--for debugging
 	--gfx.drawRect(x, y, width, height)
 end
 
+--TODO - might want to use this in future for something
 local barriers = {}
 
---TODO add the option for "overlap" here for nutrients
---function rootLeadingSprite:collisionResponse(other)
-	--if other:isA(Barrier) then
-		--return "freeze"
-	--elseif other:isA(Nutrients) then
-		--return "overlap"
-	--else
-		--return "freeze"
-	--end
-	--TODO some can move bool
-	--canMove = false
-	--return "overlap"
-	--end
-
---TODO - add sprite rotation here sprite:setRotation(angle, [scale, [yScale]])
+--note: sprite rotation abandoned here sprite (collider doesnt follow):setRotation(angle, [scale, [yScale]])
 local buttonLastPressed = playdate.kButtonUp
 local function isPressedMove()
-	if canMove == false then
-		print("can not move")
-		--return
-	end
-
 	if playdate.buttonJustPressed( playdate.kButtonUp ) then
 		buttonLastPressed = playdate.kButtonUp
-		--gridview:selectPreviousRow(false)
 	elseif playdate.buttonJustPressed(playdate.kButtonDown) then
 		buttonLastPressed = playdate.kButtonDown
-		--gridview:selectNextRow(false)
 	elseif playdate.buttonJustPressed(playdate.kButtonLeft) then
 		buttonLastPressed = playdate.kButtonLeft
-		--gridview:selectPreviousColumn(false)
 	elseif playdate.buttonJustPressed(playdate.kButtonRight) then
 		buttonLastPressed = playdate.kButtonRight
-		--gridview:selectNextColumn(false)
 	end
 end
 
-
+--local collisionSound = playdate.sound.sampleplayer.new("audio/Pando_Audio/password-infinity-123276")
 local function doMove()
-	--TODO - use this to set can move, and if can not move, then reset position/selected to previous[1]
 	local collisions = rootLeadingSprite:overlappingSprites()
-	if(#collisions >=1) then
-		
+	if(#collisions >=1) then	
 		--TODO - remove barriers array, no longer need
 		if (collisions[1]:getTag() == 2) and nutrientsCost ~= 3 then --collisions[0] == stoneSprite or collisions[1] == stoneSprite
 			--make them work for it, the crank increase
@@ -426,16 +332,16 @@ local function doMove()
 				nutrientsCost = 3
 				print("nutrients set to 3")
 				gfx.drawText("Keep Cranking!", 120, 25)
-				--brokenRockSprite:moveTo(collisions[1].x, collisions[1].y) -- need 8 and 24?
 				collisions[1].remove(collisions[1])
-				--TODO not getting remove because its getting reinstantiated onMove
-				--TODO instantiate new broken that deletes on leave?
+				--collisionSound:play()
 			--if a collision dont continue till they beat the crank
+			--TODO - this logic not working right now, not increased nutrients cost not delaying
 			return
 		elseif (collisions[1]:getTag() == 1) then
-			--TODO refactor to nutrients sprite
-			nutrientsCount += 3
+			--TODO remove magic numbers
+			nutrientsCount += 10
 			collisions[1].remove(collisions[1])
+			--collisionSound:play()
 		else	
 			
 		end
@@ -461,43 +367,22 @@ local function isPressedRotate()
 	if playdate.buttonIsPressed( playdate.kButtonUp ) then
 		rootLeadingSprite:setImage(rootLeadingImageUp)
 		buttonLastPressed = playdate.kButtonUp
-		--rootLeadingSprite:setRotation(0)
 	elseif playdate.buttonIsPressed(playdate.kButtonDown) then
 		rootLeadingSprite:setImage(rootLeadingImageDown)
 		buttonLastPressed = playdate.kButtonDown
-		--rootLeadingSprite:setRotation(180)
 	elseif playdate.buttonIsPressed(playdate.kButtonLeft) then
 		rootLeadingSprite:setImage(rootLeadingImageLeft)
 		buttonLastPressed = playdate.kButtonLeft
-		--rootLeadingSprite:setRotation(270)
 	elseif playdate.buttonIsPressed(playdate.kButtonRight) then
 		rootLeadingSprite:setImage(rootLeadingImageRight)
 		buttonLastPressed = playdate.kButtonRight
-		--rootLeadingSprite:setRotation(90)
 	end
 end
 
-function drawBackground()
-	local backgroundImage = gfx.image.new(getBackgroundImage())
-	assert(backgroundImage)
-	gfx.sprite.setBackgroundDrawingCallback(
-		function(x, y, width, height)
-			
-			--print("gamestateTHIS" ..gameState)
-			--in play mode
-			if(gameState == gameplay) then
-				--clear screen
-				--playdate.graphics.clear()
-				backgroundImage:draw(8, 24)
-			else
-				backgroundImage:draw(0, 0)
-			end
+function startScreenLaunch()
+	--mySound = playdate.sound.fileplayer.new("audio/Pando_Audio/password-infinity-123276")
+	--mySound:play()
 
-		end
-	)
-end
-
-function initialSet()
 	assert(backgroundImage)
 	gfx.sprite.setBackgroundDrawingCallback(
 		function(x, y, width, height)
@@ -512,17 +397,14 @@ function initialSet()
 	)
 end
 
-initialSet()
+startScreenLaunch()
 
 function playdate.update()
 	
 	gfx.sprite.update()
 	playdate.timer.updateTimers()
 
-	--cant be used to call 1x (runs a bunch)
-	--START GAME
 	if(gameState == -1 and playdate.buttonJustReleased(playdate.kButtonA)) then
-		--incrementGameState()
 		gameState = 1
 		print("Final Game State " .. gameState)
 		return;
@@ -532,7 +414,6 @@ function playdate.update()
 		backgroundImage = gfx.image.new(getBackgroundImage())
 		assert(backgroundImage)
 		print("Final Game State " .. gameState)
-		--incrementGameState()
 		return;
 	elseif(gameState == 1 and playdate.buttonJustReleased(playdate.kButtonA)) then
 		resetTimer()
@@ -541,8 +422,6 @@ function playdate.update()
 		playdate.graphics.clear()
 		backgroundImage = gfx.image.new(getBackgroundImage())
 		assert(backgroundImage)
-		--playerSprite.remove(playerSprite)
-		--incrementGameState()
 		initialize()
 		if gridview.needsDisplay then
 			gfx.pushContext(gridviewImage)
@@ -553,18 +432,11 @@ function playdate.update()
 		return;
 	end
 
-		
-	--if(gameState == 0 and playdate.buttonJustReleased(playdate.kButtonA)) then 
-		--gameState = 2
-		--print("HOW")
-		--drawBackground()
-		--initialize()
-	--end
-
 	--dont handle below in game logic when in title etc
 	if(gameState ~= gameplay) then
 		return
 	end
+	--for debugging
 	--gridview:drawInRect(8, 48, 400, 240)
 
 
@@ -575,20 +447,17 @@ function playdate.update()
 	crankDifficulty = 1 / nutrientsCost
 	local crankTicks = playdate.getCrankTicks(crankDifficulty)
     if crankTicks == 1 then
-			--TODO how to disable moving forward if at bottom of grid, it currently goes to top
-        --isPressedMove()
+		print("crankDifficulty" ..nutrientsCost)
 		doMove()
-		--TODO move this to doMove? since thats the only time we need to update? AND RUN 1x ON START
 		if gridview.needsDisplay then
 			gfx.pushContext(gridviewImage)
 				gridview:drawInRect(0, 0, 400, 240)
 				gfx.popContext() --this might be what we can do to "go backwards"
 			gridviewSprite:setImage(gridviewImage)
 		end
+	--TODO for later anim logic
 	--elseif crankTicks == -1 then
-		--TODO will need some kind of logic that erases print in existing row...tricky, then below
-		--gridview:selectPreviousColumn(false)
-		--gridview:selectPreviousRow(false)
+
 	--elseif crankTicks == (1/3) then
 		--TODO art
 		--getNextRootVariation()
@@ -598,64 +467,7 @@ function playdate.update()
 
 	isPressedRotate()
 
-
-	gfx.drawText("Nutrients: " .. nutrientsCount, 45, 0)
-
-
-	--[[
-	
-	if (playTimer.value == 0) or dogGotBone then
-		gfx.drawText("'A' to for next level. Time: " ..endTime, 45, 210)
-		if(playerSprite == nil) == false then
-			playerSprite.remove(playerSprite)
-		end
-
-		if playdate.buttonJustPressed(playdate.kButtonA) then
-			resetTimer()
-			playerSprite.remove(playerSprite)
-			initialize()
-		end
-	else
-		if playdate.buttonIsPressed( playdate.kButtonUp ) then
-			playerSprite:moveBy( 0, -playerSpeed )
-		end
-		if playdate.buttonIsPressed( playdate.kButtonRight ) then
-			playerSprite:moveBy( playerSpeed, 0 )
-		end
-		if playdate.buttonIsPressed( playdate.kButtonDown ) then
-			playerSprite:moveBy( 0, playerSpeed )
-		end
-		if playdate.buttonIsPressed( playdate.kButtonLeft ) then
-			playerSprite:moveBy( -playerSpeed, 0 )
-		end
-	end
-
-	local collisions = playerSprite:overlappingSprites()
-	if(#collisions >=1) then
-		if collisions[0] == boneSprite or collisions[1] == boneSprite then
-			hasBone = true
-			boneSprite.remove(boneSprite)
-		elseif (hasBone == true) and (collisions[0] == dogSprite or collisions[1] == dogSprite) then
-			dogSprite.remove(dogSprite)	
-			dogGotBone = true
-			endTime = playTimer.value/1000
-		else	
-			gfx.drawText("Ouch!", 120, 25)
-		end
-	end
-
-	if dogGotBone then
-		gfx.drawText("YOU WIN!", 120, 45)	
-	end
-
-	playdate.timer.updateTimers()
-
-	gfx.drawText("Time: " .. math.ceil(playTimer.value/1000), 45, 0)
-
-	if hasBone then
-		gfx.drawText("You picked up bone", 120, 5)
-	end
-	--]]
+	gfx.drawText("ENERGY: " .. nutrientsCount, 45, 0)
 end
 
 
