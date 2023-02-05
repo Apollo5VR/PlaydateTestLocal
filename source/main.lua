@@ -38,12 +38,12 @@ strongRockStr = 10
 local gridview = playdate.ui.gridview.new(24,24)
 
 gridview:setNumberOfColumns(16)
-gridview:setNumberOfRows(8)
+gridview:setNumberOfRows(9)
 --gridview:setCellPadding(0, 0, -2, -2)
 
 local gridviewSprite = gfx.sprite.new()
 gridviewSprite:setCenter(0, 0)
-gridviewSprite:moveTo(8, 40)
+gridviewSprite:moveTo(8, 24)
 gridviewSprite:add()
 local gridviewImage = gfx.image.new(400, 240)
 
@@ -261,18 +261,21 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 	--randomVal = math.random(0, 100)
 	if selected then
 		--rootLeadingSprite:moveWithCollisions(x + 8, y + 40) --offset of grid in screen
-		rootLeadingSprite:moveTo(x + 8, y + 40) --offset of grid in screen
 		--gfx.fillRect(x, y, width, height)
 		
 		--TODO - use this to set can move, and if can not move, then reset position/selected to previous[1]
 		local collisions = rootLeadingSprite:overlappingSprites()
 		if(#collisions >=1) then
-			--TODO increment nutrients
-			nutrients += 3
-			if collisions[0] == boneSprite or collisions[1] == boneSprite then
-
-			elseif (hasBone == true) and (collisions[0] == dogSprite or collisions[1] == dogSprite) then
-
+			if (collisions[0] == boneSprite or collisions[1] == boneSprite) and nutrientsCost ~= 3 then --collisions[0] == stoneSprite or collisions[1] == stoneSprite
+				--make them work for it, the crank increase
+				--will lose nutrients when they are cranking
+					nutrientsCost = 3
+					print("nutrients set to 3")
+				--if a collision dont continue till they beat the crank
+				return
+			elseif collisions[0] == playerSprite or collisions[1] == playerSprite then
+				--TODO refactor to nutrients sprite
+				nutrients += 3
 			else	
 				gfx.drawText("Keep Cranking!", 120, 25)
 			end
@@ -321,8 +324,15 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 		previousY0 = previousY1
 		previousX1 = x
 		previousY1 = y
+		
+		rootLeadingSprite:moveTo(x + 8, y + 24) --offset of grid in screen
+		--if you got here it means you cranked enough on the new settings
+		--TODO decrement nutrients count here by X
+		nutrients -= nutrientsCost
 
-
+		--reset the cranks required to walking, until another barrier hit
+		nutrientsCost = noBarrierStr
+		print("nutrients returned to 1")
 
 
     --elseif randomVal > 98 then
@@ -333,7 +343,8 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 		--stoneSprite:moveTo(x, y)
 	
 	else
-		dirtImage:draw(x, y)
+		--dirtImage:draw(x, y)
+		gfx.drawRect(x, y, width, height)
 	end
 end
 
@@ -434,17 +445,13 @@ function playdate.update()
 			--TODO how to disable moving forward if at bottom of grid, it currently goes to top
         --isPressedMove()
 		doMove()
+		--TODO move this to doMove? since thats the only time we need to update? AND RUN 1x ON START
 		if gridview.needsDisplay then
 			gfx.pushContext(gridviewImage)
 				gridview:drawInRect(0, 0, 400, 240)
 				gfx.popContext() --this might be what we can do to "go backwards"
 			gridviewSprite:setImage(gridviewImage)
 		end
-		--TODO decrement nutrients count here by X
-		nutrients -= nutrientsCost
-
-		--reset the cranks required to walking, until another barrier hit
-		nutrientsCost = noBarrierStr
 	--elseif crankTicks == -1 then
 		--TODO will need some kind of logic that erases print in existing row...tricky, then below
 		--gridview:selectPreviousColumn(false)
