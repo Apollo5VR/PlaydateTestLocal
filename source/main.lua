@@ -266,6 +266,10 @@ gridview:setSelection(section, 4, 8)
 --use this to draw the root in the cell
 local gfx = playdate.graphics
 local runOnce = 0
+local nutrientTimes = 7
+local barrierTimes = 3
+local runNutrientsEveryX = nutrientTimes
+local runBarrierEveryX = barrierTimes
 function gridview:drawCell(section, row, column, selected, x, y, width, height)
 	--TODO too heavy to have here
 	--math.randomseed(playdate.getSecondsSinceEpoch())
@@ -330,27 +334,44 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 		print("nutrients returned to 1")
 
 
-    elseif (row == 4 and column == 2) or (row == 6 and column == 3) then
+	elseif (row == 9) then
+		--once its gotten through the grid on load (last row), dont run instantiate for items
+		runOnce = 1			
+    else
 		if runOnce == 1 then
 			return
+		end
+
+		if runNutrientsEveryX ~= 0 then
+			runNutrientsEveryX -= 1
+			print("nutrients times " .. runNutrientsEveryX)
+		elseif runNutrientsEveryX == 0 then
+			runNutrientsEveryX = nutrientTimes
+			nurtients(x + 8, y + 24)
+			print("spawned random nutrient" ..row .. column)
+		end
+
+		if runBarrierEveryX ~= 0 then
+			runBarrierEveryX -= 1
+		elseif runNutrientsEveryX == 0 then
+			runBarrierEveryX = barrierTimes
+			barrier(x + 8, y + 24)
+			print("spawned random barrier" ..row .. column)
 		end
 		--randomly instantiate rock
 		--instantiate rock
 		--instantiate nutrients
 		--print("random happened" .. randomVal)
 		--stoneSprite:moveTo(x, y)
-		nurtients(x + 8, y + 24)
-		print("spawned random" ..row .. column)
-	elseif (row == 3 and column == 9) or (row == 8 and column == 3) then
-		if runOnce == 1 then
-			return
-		end
-		table.insert(barrier(x + 8, y + 24), #barrier)
-	elseif (row == 9) then
-		runOnce = 1			
+		--nurtients(x + 8, y + 24)
+		--print("spawned random" ..row .. column)
+	--elseif (row == 3 and column == 9) or (row == 8 and column == 3) then
+		--if runOnce == 1 then
+			--return
+		--end
+		--table.insert(barrier(x + 8, y + 24), #barrier)
 	end
-
-	gfx.drawRect(x, y, width, height)
+	--gfx.drawRect(x, y, width, height)
 end
 
 local barriers = {}
@@ -396,25 +417,9 @@ end
 local function doMove()
 	--TODO - use this to set can move, and if can not move, then reset position/selected to previous[1]
 	local collisions = rootLeadingSprite:overlappingSprites()
-	--[[
-	for key, sprite in pairs( collisions ) do
-		if ( sprite:getTag() == 1) then
-			--nutrients
-			nutrientsCount += 3
-			sprite:remove()
-		elseif ( sprite:getTag() == 2 and nutrientsCost ~= 3) then
-			--barrier
-			nutrientsCost = 3
-				print("nutrients set to 3")
-				gfx.drawText("Keep Cranking!", 120, 25)
-			--if a collision dont continue till they beat the crank
-			return
-		end
-	end
---]]
 	if(#collisions >=1) then
 		
-		--loop through barriers?
+		--TODO - remove barriers array, no longer need
 		if (collisions[1]:getTag() == 2) and nutrientsCost ~= 3 then --collisions[0] == stoneSprite or collisions[1] == stoneSprite
 			--make them work for it, the crank increase
 			--will lose nutrients when they are cranking
