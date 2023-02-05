@@ -85,21 +85,34 @@ local function resetTimer()
 	playTimer = playdate.timer.new(playTime, playTime, 0, playdate.easingFunctions.linear)
 end
 
---TODO replace the image file locations for the root variations
-local function getNextRootVariation()
-	if rootState == 0 then
-		rootState += 1
-		return "images/castlebackground"
-	end
-	if rootState == 1 then
-		rootState += 1
-		return "images/spacebackground"
-	end
-	if rootState == 2 then
-		rootState = 0
-		return "images/desertbackground"
+local gameState = 0
+function incrementGameState()
+	gameState += 1
+
+	print("incremented state" .. gameState)
+	--game end, restart game state to title
+	if(gameState == 4) then
+		gameState = 0
 	end
 end
+
+--TODO replace the image file locations for the root variations
+local gameplay = 2
+local function getBackgroundImage()
+	--intro image
+	if gameState == 0 then
+		return "images/Pando/MenuAssets/Promo_01"
+	--tutorial
+	elseif gameState == 1 then
+		return "images/Pando/MenuAssets/MainMenu_Tutorial_01"
+	elseif gameState == gameplay then
+		return "images/Pando/Cells/Dirt/Dirt_02"
+	--game over (text displayed)
+	elseif gameState == 3 then
+		return "images/Pando/MenuAssets/MainMenu_Blank_01"
+	end
+end
+local backgroundImage = gfx.image.new(getBackgroundImage())
 
 --1 check treeMinimum, 2 check movementMinimum, etc
 local function isEnoughNutrients(checkArg)	
@@ -232,21 +245,12 @@ local function initialize()
 	brokenRockSprite:add()
 
 	--nextLevel()
-	
-	local backgroundImage = gfx.image.new("images/Pando/Cells/Dirt/Dirt_02")
-	assert(backgroundImage)
-	gfx.sprite.setBackgroundDrawingCallback(
-		function(x, y, width, height)
-			backgroundImage:draw(8, 24)
-		end
-	)
 
 	resetTimer()
 end
 
 
-
-initialize()
+--initialize()
 
 --start the player in middle of grid
 local section, row, column = gridview:getSelection()
@@ -352,7 +356,7 @@ end
 local barriers = {}
 
 --TODO add the option for "overlap" here for nutrients
-function rootLeadingSprite:collisionResponse(other)
+--function rootLeadingSprite:collisionResponse(other)
 	--if other:isA(Barrier) then
 		--return "freeze"
 	--elseif other:isA(Nutrients) then
@@ -363,7 +367,7 @@ function rootLeadingSprite:collisionResponse(other)
 	--TODO some can move bool
 	--canMove = false
 	--return "overlap"
-	end
+	--end
 
 --TODO - add sprite rotation here sprite:setRotation(angle, [scale, [yScale]])
 local buttonLastPressed = playdate.kButtonUp
@@ -468,11 +472,94 @@ local function isPressedRotate()
 	end
 end
 
+function drawBackground()
+	local backgroundImage = gfx.image.new(getBackgroundImage())
+	assert(backgroundImage)
+	gfx.sprite.setBackgroundDrawingCallback(
+		function(x, y, width, height)
+			
+			--print("gamestateTHIS" ..gameState)
+			--in play mode
+			if(gameState == gameplay) then
+				--clear screen
+				--playdate.graphics.clear()
+				backgroundImage:draw(8, 24)
+			else
+				backgroundImage:draw(0, 0)
+			end
+
+		end
+	)
+end
+
+function initialSet()
+	assert(backgroundImage)
+	gfx.sprite.setBackgroundDrawingCallback(
+		function(x, y, width, height)
+			--in play mode
+			if(gameState == gameplay) then
+				backgroundImage:draw(8, 24)
+			else
+				backgroundImage:draw(0, 0)
+			end
+
+		end
+	)
+end
+
+initialSet()
 
 function playdate.update()
 	
 	gfx.sprite.update()
 	playdate.timer.updateTimers()
+
+	--cant be used to call 1x (runs a bunch)
+	--START GAME
+	if(gameState == -1 and playdate.buttonJustReleased(playdate.kButtonA)) then
+		--incrementGameState()
+		gameState = 1
+		print("Final Game State " .. gameState)
+		return;
+	elseif(gameState == 0 and playdate.buttonJustReleased(playdate.kButtonA)) then
+		gameState = 1
+		playdate.graphics.clear()
+		backgroundImage = gfx.image.new(getBackgroundImage())
+		assert(backgroundImage)
+		print("Final Game State " .. gameState)
+		--incrementGameState()
+		return;
+	elseif(gameState == 1 and playdate.buttonJustReleased(playdate.kButtonA)) then
+		resetTimer()
+		gameState = 2
+		print("Final Game State " .. gameState)
+		playdate.graphics.clear()
+		backgroundImage = gfx.image.new(getBackgroundImage())
+		assert(backgroundImage)
+		--playerSprite.remove(playerSprite)
+		--incrementGameState()
+		initialize()
+		if gridview.needsDisplay then
+			gfx.pushContext(gridviewImage)
+				gridview:drawInRect(0, 0, 400, 240)
+				gfx.popContext() --this might be what we can do to "go backwards"
+			gridviewSprite:setImage(gridviewImage)
+		end
+		return;
+	end
+
+		
+	--if(gameState == 0 and playdate.buttonJustReleased(playdate.kButtonA)) then 
+		--gameState = 2
+		--print("HOW")
+		--drawBackground()
+		--initialize()
+	--end
+
+	--dont handle below in game logic when in title etc
+	if(gameState ~= gameplay) then
+		return
+	end
 	--gridview:drawInRect(8, 48, 400, 240)
 
 
