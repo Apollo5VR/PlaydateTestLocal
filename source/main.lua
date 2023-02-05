@@ -72,6 +72,7 @@ end
 
 --TODO unused, refactor to use appropriately
 local gameState = 0
+--[[
 function incrementGameState()
 	gameState += 1
 
@@ -81,6 +82,7 @@ function incrementGameState()
 		gameState = 0
 	end
 end
+--]]
 
 --TODO relocate / organize
 local gameplay = 2
@@ -91,7 +93,7 @@ local function getBackgroundImage()
 	--tutorial
 	elseif gameState == 1 then
 		return "images/Pando/MenuAssets/MainMenu_Tutorial_01"
-	elseif gameState == gameplay then
+	elseif gameState == gameplay then --2
 		return "images/Pando/Cells/Dirt/Dirt_02"
 	--game over (text displayed)
 	elseif gameState == 3 then
@@ -397,6 +399,10 @@ function startScreenLaunch()
 	)
 end
 
+--function clearAllSprites()
+
+--end
+
 startScreenLaunch()
 
 function playdate.update()
@@ -430,6 +436,32 @@ function playdate.update()
 			gridviewSprite:setImage(gridviewImage)
 		end
 		return;
+	end
+
+	--TODO relocate to a more performant location
+	if nutrientsCount <= 0 then
+		--TODO - need to clear sprites and graphics?
+		local allSprites = gfx.sprite.getAllSprites()
+		for index, sprite in ipairs(allSprites) do
+				sprite:remove()
+		end
+
+		gfx.drawText("You ran out of nutrients!", 60, 190)
+		gfx.drawText("Go to Playdate menu and restart game", 60, 210)
+		--check game state for if we been here already
+		if gameState >= 3 then
+			return
+		else
+
+		--change local background to end screen
+		playdate.graphics.clear()
+		gameState = 3;
+		backgroundImage = gfx.image.new("images/Pando/MenuAssets/MainMenu_Blank_01")
+		assert(backgroundImage)
+		print("gamestate endB" .. gameState)
+
+		--nutrientsCount = 100
+		end
 	end
 
 	--dont handle below in game logic when in title etc
