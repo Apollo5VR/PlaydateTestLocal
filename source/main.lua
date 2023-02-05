@@ -23,7 +23,7 @@ maxLevel = 5
 
 --pando vars
 local rootLeadingSprite = nil
-nutrientsCount = 100
+nutrientsCount = 10
 treeNutrientsMin = 50
 movementNutrientsMin = 1
 nutrientsCost = 1
@@ -389,6 +389,7 @@ function startScreenLaunch()
 	gfx.sprite.setBackgroundDrawingCallback(
 		function(x, y, width, height)
 			--in play mode
+			print("is still called")
 			if(gameState == gameplay) then
 				backgroundImage:draw(8, 24)
 			else
@@ -441,25 +442,26 @@ function playdate.update()
 	--TODO relocate to a more performant location
 	if nutrientsCount <= 0 then
 		--TODO - need to clear sprites and graphics?
-		local allSprites = gfx.sprite.getAllSprites()
-		for index, sprite in ipairs(allSprites) do
-				sprite:remove()
-		end
-
+		backgroundImage:draw(0, 0)
 		gfx.drawText("You ran out of nutrients!", 60, 190)
 		gfx.drawText("Go to Playdate menu and restart game", 60, 210)
 		--check game state for if we been here already
+
 		if gameState >= 3 then
 			return
 		else
 
 		--change local background to end screen
+		local allSprites = gfx.sprite.getAllSprites()
+		for index, sprite in ipairs(allSprites) do
+				sprite:remove()
+		end
+
 		playdate.graphics.clear()
 		gameState = 3;
 		backgroundImage = gfx.image.new("images/Pando/MenuAssets/MainMenu_Blank_01")
 		assert(backgroundImage)
 		print("gamestate endB" .. gameState)
-
 		--nutrientsCount = 100
 		end
 	end
