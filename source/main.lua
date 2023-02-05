@@ -263,23 +263,7 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 		--rootLeadingSprite:moveWithCollisions(x + 8, y + 40) --offset of grid in screen
 		--gfx.fillRect(x, y, width, height)
 		
-		--TODO - use this to set can move, and if can not move, then reset position/selected to previous[1]
-		local collisions = rootLeadingSprite:overlappingSprites()
-		if(#collisions >=1) then
-			if (collisions[0] == boneSprite or collisions[1] == boneSprite) and nutrientsCost ~= 3 then --collisions[0] == stoneSprite or collisions[1] == stoneSprite
-				--make them work for it, the crank increase
-				--will lose nutrients when they are cranking
-					nutrientsCost = 3
-					print("nutrients set to 3")
-				--if a collision dont continue till they beat the crank
-				return
-			elseif collisions[0] == playerSprite or collisions[1] == playerSprite then
-				--TODO refactor to nutrients sprite
-				nutrients += 3
-			else	
-				gfx.drawText("Keep Cranking!", 120, 25)
-			end
-		end
+		--TODO collision check was originally here
 
 		--dont draw if player cant actually move
 		--if(canMove) then
@@ -386,9 +370,23 @@ local function isPressedMove()
 end
 
 local function doMove()
-	if canMove == false then
-		print("can not move")
-		--return
+	--TODO - use this to set can move, and if can not move, then reset position/selected to previous[1]
+	local collisions = rootLeadingSprite:overlappingSprites()
+	if(#collisions >=1) then
+		if (collisions[0] == boneSprite or collisions[1] == boneSprite) and nutrientsCost ~= 3 then --collisions[0] == stoneSprite or collisions[1] == stoneSprite
+			--make them work for it, the crank increase
+			--will lose nutrients when they are cranking
+				nutrientsCost = 3
+				print("nutrients set to 3")
+				gfx.drawText("Keep Cranking!", 120, 25)
+			--if a collision dont continue till they beat the crank
+			return
+		elseif collisions[0] == playerSprite or collisions[1] == playerSprite then
+			--TODO refactor to nutrients sprite
+			nutrients += 3
+		else	
+			
+		end
 	end
 
 	switch (buttonLastPressed) {
