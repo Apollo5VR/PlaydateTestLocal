@@ -5,8 +5,10 @@ import "CoreLibs/timer"
 import "CoreLibs/ui"
 import "CoreLibs/crank"
 
+import "nurtients"
+import "barrier"
+
 local gfx<const> = playdate.graphics
-local playerSprite = nil
 
 local rootLeadingSprite = nil
 
@@ -25,7 +27,7 @@ level = 0
 maxLevel = 5
 
 --pando vars
-nutrients = 100
+nutrientsCount = 100
 treeNutrientsMin = 50
 movementNutrientsMin = 1
 nutrientsCost = 1
@@ -103,7 +105,7 @@ end
 local function isEnoughNutrients(checkArg)	
 	switch (checkArg) {
 		[1] = function()
-			if nutrients < treeNutrientsMin then
+			if nutrientsCount < treeNutrientsMin then
 				-- can not build a tree, TODO notify user
 
 				return false
@@ -112,7 +114,7 @@ local function isEnoughNutrients(checkArg)
 			end
 		end,
 		[2] = function()
-			if nutrients < movementNutrientsMin then
+			if nutrientsCount < movementNutrientsMin then
 				-- game over, TODO show a message or go to the main menu
 
 				return false
@@ -157,7 +159,7 @@ local function nextLevel()
 		--]]
 
 		--specific starting locations for first level
-		playerSprite:moveTo(300,200)
+		brokenRockSprite:moveTo(300,200)
 		--rootLeadingSprite:moveTo(315,125)
 		boneSprite:moveTo(80,190)
 
@@ -166,7 +168,7 @@ local function nextLevel()
 		math.randomseed(playdate.getSecondsSinceEpoch())
 		local x = math.random(100, 300)
 		local y = math.random(50, 150)
-		playerSprite:moveTo(x,y)
+		--brokenRockSprite:moveTo(x,y)
 		local x = math.random(100, 300)
 		local y = math.random(50, 150)
 		boneSprite:moveTo(x,y)
@@ -191,9 +193,9 @@ local function initialize()
 		boneSprite.remove(boneSprite)
 	end
 
-	if(playerSprite == nil) == false then
-		playerSprite.remove(playerSprite)
-	end
+	--if(brokenRockSprite == nil) == false then
+		--brokenRockSprite.remove(brokenRockSprite)
+	--end
 
 	if(rootLeadingSprite == nil) == false then
 		rootLeadingSprite.remove(rootLeadingSprite)
@@ -212,6 +214,7 @@ local function initialize()
 	dirtImage = gfx.image.new("images/Pando/Cells/Dirt/Dirt_01")
 	rootLeadingSprite = gfx.sprite.new(rootLeadingImageUp)
 	rootLeadingSprite:setCollideRect(0,0,rootLeadingSprite:getSize())
+	rootLeadingSprite:setCenter(0, 0)
 	rootLeadingSprite:add()
 
 	local boneImage = gfx.image.new("images/allSprites/bone")
@@ -221,18 +224,16 @@ local function initialize()
 
 	local stoneWeakImage = gfx.image.new("images/Pando/Cells/Rock/Stone_Weak_01")
 	stoneSprite = gfx.sprite.new(stoneWeakImage)
-	--stoneSprite:setCollideRect(0,0,stoneSprite:getSize())
+	stoneSprite:setCenter(0,0)
+	stoneSprite:setCollideRect(0,0,stoneSprite:getSize())
 	stoneSprite:add()
-	
 
-	
-
-	local playerImage = gfx.image.new("images/allSprites/player")
-	assert( playerImage )
-	rootLeadingSprite:setCenter(0, 0)
-	playerSprite = gfx.sprite.new(playerImage)
-	playerSprite:setCollideRect(0,0,playerSprite:getSize())
-	playerSprite:add()
+	--used repeatedly, has no collider
+	local brokenRockImage = gfx.image.new("images/Pando/Cells/Rock/Stone_Medium_Broken_01")
+	brokenRockSprite = gfx.sprite.new(brokenRockImage)
+	brokenRockSprite:setCenter(0,0)
+	brokenRockSprite:moveTo(120,120)
+	brokenRockSprite:add()
 
 	nextLevel()
 
@@ -256,7 +257,9 @@ gridview:setSelection(section, 4, 8)
 
 --use this to draw the root in the cell
 local gfx = playdate.graphics
+local runOnce = 0
 function gridview:drawCell(section, row, column, selected, x, y, width, height)
+	--TODO too heavy to have here
 	--math.randomseed(playdate.getSecondsSinceEpoch())
 	--randomVal = math.random(0, 100)
 	if selected then
@@ -312,25 +315,37 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 		rootLeadingSprite:moveTo(x + 8, y + 24) --offset of grid in screen
 		--if you got here it means you cranked enough on the new settings
 		--TODO decrement nutrients count here by X
-		nutrients -= nutrientsCost
+		nutrientsCount -= nutrientsCost
 
 		--reset the cranks required to walking, until another barrier hit
 		nutrientsCost = noBarrierStr
 		print("nutrients returned to 1")
 
 
-    --elseif randomVal > 98 then
+    elseif (row == 4 and column == 2) or (row == 6 and column == 3) then
+		if runOnce == 1 then
+			return
+		end
 		--randomly instantiate rock
 		--instantiate rock
 		--instantiate nutrients
 		--print("random happened" .. randomVal)
 		--stoneSprite:moveTo(x, y)
-	
-	else
-		--dirtImage:draw(x, y)
-		gfx.drawRect(x, y, width, height)
+		nurtients(x + 8, y + 24)
+		print("spawned random" ..row .. column)
+	elseif (row == 3 and column == 9) or (row == 8 and column == 3) then
+		if runOnce == 1 then
+			return
+		end
+		table.insert(barrier(x + 8, y + 24), #barrier)
+	elseif (row == 9) then
+		runOnce = 1			
 	end
+
+	gfx.drawRect(x, y, width, height)
 end
+
+local barriers = {}
 
 --TODO add the option for "overlap" here for nutrients
 function rootLeadingSprite:collisionResponse(other)
@@ -369,21 +384,45 @@ local function isPressedMove()
 	end
 end
 
+
 local function doMove()
 	--TODO - use this to set can move, and if can not move, then reset position/selected to previous[1]
 	local collisions = rootLeadingSprite:overlappingSprites()
+	--[[
+	for key, sprite in pairs( collisions ) do
+		if ( sprite:getTag() == 1) then
+			--nutrients
+			nutrientsCount += 3
+			sprite:remove()
+		elseif ( sprite:getTag() == 2 and nutrientsCost ~= 3) then
+			--barrier
+			nutrientsCost = 3
+				print("nutrients set to 3")
+				gfx.drawText("Keep Cranking!", 120, 25)
+			--if a collision dont continue till they beat the crank
+			return
+		end
+	end
+--]]
 	if(#collisions >=1) then
-		if (collisions[0] == boneSprite or collisions[1] == boneSprite) and nutrientsCost ~= 3 then --collisions[0] == stoneSprite or collisions[1] == stoneSprite
+		
+		--loop through barriers?
+		if (collisions[1]:getTag() == 2) and nutrientsCost ~= 3 then --collisions[0] == stoneSprite or collisions[1] == stoneSprite
 			--make them work for it, the crank increase
 			--will lose nutrients when they are cranking
 				nutrientsCost = 3
 				print("nutrients set to 3")
 				gfx.drawText("Keep Cranking!", 120, 25)
+				brokenRockSprite:moveTo(collisions[1].x, collisions[1].y) -- need 8 and 24?
+				collisions[1].remove(collisions[1])
+				--TODO not getting remove because its getting reinstantiated onMove
+				--TODO instantiate new broken that deletes on leave?
 			--if a collision dont continue till they beat the crank
 			return
-		elseif collisions[0] == playerSprite or collisions[1] == playerSprite then
+		elseif (collisions[1]:getTag() == 1) then
 			--TODO refactor to nutrients sprite
-			nutrients += 3
+			nutrientsCount += 3
+			collisions[1].remove(collisions[1])
 		else	
 			
 		end
@@ -464,7 +503,7 @@ function playdate.update()
 	isPressedRotate()
 
 
-	gfx.drawText("Nutrients: " .. nutrients, 45, 0)
+	gfx.drawText("Nutrients: " .. nutrientsCount, 45, 0)
 
 
 	--[[
