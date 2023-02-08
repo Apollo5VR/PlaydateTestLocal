@@ -217,13 +217,14 @@ gridview:setSelection(section, 4, 8)
 --use this to draw the root in the cell
 local gfx = playdate.graphics
 local runOnce = 0
-local nutrientTimes = 7
-local barrierTimes = 3
+local nutrientTimes = 5
+local barrierTimes = 2
 local runNutrientsEveryX = nutrientTimes
 local runBarrierEveryX = barrierTimes
 -- Define the number of objects to place
 nutrientsLimit = 5
 local gridChances = GenerateGridObjects()
+local gridChances1 = GenerateGridObjects()
 
 --random values between grid size for spawning barriers and nutrients,using drawCell specifying the row column
 function gridview:drawCell(section, row, column, selected, x, y, width, height)
@@ -284,13 +285,9 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 			return
 		end
 
-		--as it goes through the grid drawing cells
-		--if(runNutrientsEveryX ~= 0) then 
-		if gridChances[row][column] > 50 then --50% chance
+		if gridChances[row][column] > 75 then --50% chance
 			nurtients(x + 8, y + 24)
-			runNutrientsEveryX -= 1 --will decrement from 9, each time when a random success down to 0, then will no longer check random (allows controlling exact amount of nutrients, just placed dif)
 		end
-		--end
 
 		--[[
 		if runNutrientsEveryX ~= 0 then
@@ -298,16 +295,22 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 			print("nutrients times " .. runNutrientsEveryX)
 		elseif runNutrientsEveryX == 0 then
 			runNutrientsEveryX = nutrientTimes
-			nurtients(x + 8, y + 24)
-			print("spawned random nutrient" ..row .. column)
+			if gridChances[row][column] > 75 then --50% chance
+				nurtients(x + 8, y + 24)
+				runNutrientsEveryX -= 1 --will decrement from 9, each time when a random success down to 0, then will no longer check random (allows controlling exact amount of nutrients, just placed dif)
+				print("spawned random nutrient" ..row .. column)
+			end
 		end
 
 		if runBarrierEveryX ~= 0 then
 			runBarrierEveryX -= 1
 		elseif runNutrientsEveryX == 0 then
 			runBarrierEveryX = barrierTimes
-			barrier(x + 8, y + 24)
-			print("spawned random barrier" ..row .. column)
+			if gridChances[row][column] > 50 then --50% chance
+				barrier(x + 8, y + 24)
+				runNutrientsEveryX -= 1 --will decrement from 9, each time when a random success down to 0, then will no longer check random (allows controlling exact amount of nutrients, just placed dif)
+				print("spawned random barrier" ..row .. column)
+			end
 		end
 		--]]
 	--note: manual alternative if looking to revert to full control
