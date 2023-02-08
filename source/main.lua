@@ -285,7 +285,7 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 			return
 		end
 
-		if gridChances[row][column] > 75 then --50% chance
+		if gridChances[row][column] > 75 then
 			nurtients(x + 8, y + 24)
 		end
 
