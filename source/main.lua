@@ -7,6 +7,7 @@ import "CoreLibs/crank"
 
 import "nurtients"
 import "barrier"
+import "gridManager"
 
 local gfx<const> = playdate.graphics
 
@@ -220,6 +221,10 @@ local nutrientTimes = 7
 local barrierTimes = 3
 local runNutrientsEveryX = nutrientTimes
 local runBarrierEveryX = barrierTimes
+-- Define the number of objects to place
+nutrientsLimit = 5
+local gridChances = GenerateGridObjects()
+
 --random values between grid size for spawning barriers and nutrients,using drawCell specifying the row column
 function gridview:drawCell(section, row, column, selected, x, y, width, height)
 	--TODO too heavy to have here, if use need coroutine or other location
@@ -272,13 +277,22 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 		if runOnce == 1 then
 			return
 		end
-		--once its gotten through the grid on load (last row), dont run instantiate for items
-		barrier(x + 8, y + 24)	
+		--we want to add the sidewalks to the top layer here, TODO reactivate
+		--barrier(x + 8, y + 24)	
     else
 		if runOnce == 1 then
 			return
 		end
 
+		--as it goes through the grid drawing cells
+		--if(runNutrientsEveryX ~= 0) then 
+		if gridChances[row][column] > 50 then --50% chance
+			nurtients(x + 8, y + 24)
+			runNutrientsEveryX -= 1 --will decrement from 9, each time when a random success down to 0, then will no longer check random (allows controlling exact amount of nutrients, just placed dif)
+		end
+		--end
+
+		--[[
 		if runNutrientsEveryX ~= 0 then
 			runNutrientsEveryX -= 1
 			print("nutrients times " .. runNutrientsEveryX)
@@ -295,6 +309,7 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 			barrier(x + 8, y + 24)
 			print("spawned random barrier" ..row .. column)
 		end
+		--]]
 	--note: manual alternative if looking to revert to full control
 	--elseif (row == 3 and column == 9) or (row == 8 and column == 3) then
 		--if runOnce == 1 then
