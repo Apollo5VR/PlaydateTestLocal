@@ -51,6 +51,8 @@ local rootLeadingImageRight
 local rootLeadingImageDown
 local rootLeadingImageLeft
 
+-- Adding root point-turning
+--[[
 local rootImage_LeadDown_Right
 local rootImage_LeadDown_Left
 local rootImage_LeadDown_Straight
@@ -63,6 +65,7 @@ local rootImage_LeadRight_Straight
 local rootImage_LeadUp_Right
 local rootImage_LeadUp_Left
 local rootImage_LeadUp_Straight
+]]
 
 local rootImageVertical
 local rootImageHorizontal
@@ -189,6 +192,7 @@ local function initialize()
 	rootImage_RightDown = gfx.image.new("images/Pando/Cells/Root/Root_Corner_RightDown_01")
 	rootImage_UpLeft = gfx.image.new("images/Pando/Cells/Root/Root_Corner_UpLeft_01")
 	rootImage_UpRight = gfx.image.new("images/Pando/Cells/Root/Root_Corner_UpRight_01")
+	--[[Root point-turning images
 	rootImage_LeadDown_Right = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadDown_Right_01")
 	rootImage_LeadDown_Left = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadDown_Left_01")
 	rootImage_LeadDown_Straight = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadLeft_Straight_01")
@@ -201,7 +205,8 @@ local function initialize()
 	rootImage_LeadUp_Right = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Right_01")
 	rootImage_LeadUp_Left = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Left_01")
 	rootImage_LeadUp_Straight = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Straight_01")
-	
+	]]
+
 	rootLeadingSprite = gfx.sprite.new(rootLeadingImageUp)
 	rootLeadingSprite:setCollideRect(0,0,rootLeadingSprite:getSize())
 	rootLeadingSprite:setCenter(0, 0)
@@ -352,36 +357,44 @@ local function isPressedMove()
 	-- TYLER: I added conditions to play the root pointing for the direction the player is holding
 	if playdate.buttonJustPressed( playdate.kButtonUp ) then
 		buttonLastPressed = playdate.kButtonUp
+		--[[Root pointing conditionals
 		if (x > previousX1) then
 			rootImage_LeadRight_Left:draw(x, y)
 		elseif ( y < previousY1) then
 			rootImage_LeadUp_Straight:draw(x,y)
 		else (x < previousX1) then
 			rootImage_LeadLeft_Right:draw(x,y)
+		]]
 	elseif playdate.buttonJustPressed(playdate.kButtonDown) then
 		buttonLastPressed = playdate.kButtonDown
+		--[[Root pointing conditionals
 		if (x > previousX1) then
 			rootImage_LeadRight_Right:draw(x, y)
 		elseif ( y > previousY1) then
 			rootImage_LeadDown_Straight:draw(x,y)
 		else (x < previousX1) then
 			rootImage_LeadLeft_Left:draw(x,y)
+		]]
 	elseif playdate.buttonJustPressed(playdate.kButtonLeft) then
 		buttonLastPressed = playdate.kButtonLeft
+		--[[Root pointing conditionals
 		if (y > previousX1) then
 			rootImage_LeadDown_Right:draw(x, y)
 		elseif ( y < previousY1) then
 			rootImage_LeadUp_Left:draw(x,y)
 		else (x < previousX1) then
 			rootImage_LeadLeft_Straight:draw(x,y)
+		]]
 	elseif playdate.buttonJustPressed(playdate.kButtonRight) then
 		buttonLastPressed = playdate.kButtonRight
+		--[[Root pointing conditionals
 		if (x > previousX1) then
 			rootImage_LeadRight_Straight:draw(x, y)
 		elseif ( y < previousY1) then
 			rootImage_LeadUp_Right:draw(x,y)
 		else (x < previousX1) then
 			rootImage_LeadLeft_Up:draw(x,y)
+		]]
 	end
 end
 
