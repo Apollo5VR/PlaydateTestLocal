@@ -7,6 +7,7 @@ import "CoreLibs/crank"
 
 import "nurtients"
 import "barrier"
+import "sidewalk"
 import "gridManager"
 
 local gfx<const> = playdate.graphics
@@ -187,10 +188,10 @@ local function initialize()
 	boneSprite:add()
 
 	local stoneWeakImage = gfx.image.new("images/Pando/Cells/Rock/Stone_Weak_01")
-	stoneSprite = gfx.sprite.new(stoneWeakImage)
-	stoneSprite:setCenter(0,0)
-	stoneSprite:setCollideRect(0,0,stoneSprite:getSize())
-	stoneSprite:add()
+	sidewalkSprite = gfx.sprite.new(stoneWeakImage)
+	sidewalkSprite:setCenter(0,0)
+	sidewalkSprite:setCollideRect(0,0,sidewalkSprite:getSize())
+	sidewalkSprite:add()
 
 	--used repeatedly, has no collider
 	local brokenRockImage = gfx.image.new("images/Pando/Cells/Rock/Stone_Medium_Broken_01")
@@ -217,10 +218,11 @@ gridview:setSelection(section, 4, 8)
 --use this to draw the root in the cell
 local gfx = playdate.graphics
 local runOnce = 0
-local nutrientTimes = 5
-local barrierTimes = 2
-local runNutrientsEveryX = nutrientTimes
-local runBarrierEveryX = barrierTimes
+local maxNutrientTimes = 7 --max number of  nutrients that will spawn
+local maxBarrierTimes = 15
+local nutrientsChance = 15 --chance that we'll spawn
+local barrierChance = 25
+local isFilled = false
 -- Define the number of objects to place
 nutrientsLimit = 5
 local gridChances = GenerateGridObjects()
@@ -270,50 +272,41 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 		print("nutrients returned to 1")
 
 
-	elseif (row == 9) then
-		--once its gotten through the grid on load (last row), dont run instantiate for items
-		runOnce = 1	
-		--TODO sidewalk barrier, if break, present tree
-	elseif (row == 0) then
+	elseif (row == 1) then
 		if runOnce == 1 then
 			return
 		end
 		--we want to add the sidewalks to the top layer here, TODO reactivate
-		--barrier(x + 8, y + 24)	
-    else
+		sidewalk(x + 8, y + 24)	
+	elseif (row == 9) then
+		--once its gotten through the grid on load (last row), dont run instantiate for items
+		runOnce = 1	
+		--TODO sidewalk barrier, if break, present tree
+	else
 		if runOnce == 1 then
 			return
-		end
+		end		
 
-		if gridChances[row][column] > 75 then
+		--handle nutrients spawn
+		if (gridChances[row][column] < nutrientsChance) and (maxNutrientTimes ~= 0) and (isFilled == false) then --50% chance
 			nurtients(x + 8, y + 24)
+			maxNutrientTimes -= 1
+			isFilled = true
+			print("spawned random nutrient" ..row .. column)
 		end
 
-		--[[
-		if runNutrientsEveryX ~= 0 then
-			runNutrientsEveryX -= 1
-			print("nutrients times " .. runNutrientsEveryX)
-		elseif runNutrientsEveryX == 0 then
-			runNutrientsEveryX = nutrientTimes
-			if gridChances[row][column] > 75 then --50% chance
-				nurtients(x + 8, y + 24)
-				runNutrientsEveryX -= 1 --will decrement from 9, each time when a random success down to 0, then will no longer check random (allows controlling exact amount of nutrients, just placed dif)
-				print("spawned random nutrient" ..row .. column)
-			end
+		--handle barrier spawn
+		if (gridChances[row][column] < barrierChance) and (maxBarrierTimes ~= 0) and (isFilled == false) then --50% chance
+			barrier(x + 8, y + 24)
+			maxBarrierTimes -= 1
+			isFilled = true
+			print("spawned random barrier" ..row .. column)
 		end
+		
+		--rest isFilled before moving onto the next grid
+		isFilled = false
 
-		if runBarrierEveryX ~= 0 then
-			runBarrierEveryX -= 1
-		elseif runNutrientsEveryX == 0 then
-			runBarrierEveryX = barrierTimes
-			if gridChances[row][column] > 50 then --50% chance
-				barrier(x + 8, y + 24)
-				runNutrientsEveryX -= 1 --will decrement from 9, each time when a random success down to 0, then will no longer check random (allows controlling exact amount of nutrients, just placed dif)
-				print("spawned random barrier" ..row .. column)
-			end
-		end
-		--]]
-	--note: manual alternative if looking to revert to full control
+	--note / deactivated: manual alternative if looking to revert to full control
 	--elseif (row == 3 and column == 9) or (row == 8 and column == 3) then
 		--if runOnce == 1 then
 			--return
@@ -407,7 +400,6 @@ function startScreenLaunch()
 	gfx.sprite.setBackgroundDrawingCallback(
 		function(x, y, width, height)
 			--in play mode
-			print("is still called")
 			if(gameState == gameplay) then
 				backgroundImage:draw(8, 24)
 			else
