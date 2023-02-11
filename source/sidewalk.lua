@@ -3,12 +3,12 @@
 local pd <const> = playdate
 local gfx <const> = pd.graphics
 
-class('barrier').extends(gfx.sprite)
+class('sidewalk').extends(gfx.sprite)
 
 
-function barrier:init(x, y)
-local barrierImage = gfx.image.new("images/Pando/Cells/Rock/Stone_Medium_01") 
-	sidewalkSprite = gfx.sprite.new(barrierImage)
+function sidewalk:init(x, y)
+local sidewalkImage = gfx.image.new("images/Pando/Cells/Rock/Sidewalk_01_cell") 
+	sidewalkSprite = gfx.sprite.new(sidewalkImage)
 	sidewalkSprite:setCenter(0,0)
 	sidewalkSprite:setCollideRect(0,0,sidewalkSprite:getSize())
     sidewalkSprite:moveTo(x, y)
