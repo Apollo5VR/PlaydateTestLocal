@@ -50,6 +50,19 @@ local rootLeadingImageRight
 local rootLeadingImageDown
 local rootLeadingImageLeft
 
+local rootImage_LeadDown_Right
+local rootImage_LeadDown_Left
+local rootImage_LeadDown_Straight
+local rootImage_LeadLeft_Right
+local rootImage_LeadLeft_Left
+local rootImage_LeadLeft_Straight
+local rootImage_LeadRight_Right
+local rootImage_LeadRight_Left
+local rootImage_LeadRight_Straight 
+local rootImage_LeadUp_Right
+local rootImage_LeadUp_Left
+local rootImage_LeadUp_Straight
+
 local rootImageVertical
 local rootImageHorizontal
 local rootImage_LeftDown
@@ -175,6 +188,18 @@ local function initialize()
 	rootImage_RightDown = gfx.image.new("images/Pando/Cells/Root/Root_Corner_RightDown_01")
 	rootImage_UpLeft = gfx.image.new("images/Pando/Cells/Root/Root_Corner_UpLeft_01")
 	rootImage_UpRight = gfx.image.new("images/Pando/Cells/Root/Root_Corner_UpRight_01")
+	rootImage_LeadDown_Right = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadDown_Right_01")
+	rootImage_LeadDown_Left = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadDown_Left_01")
+	rootImage_LeadDown_Straight = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadLeft_Straight_01")
+	rootImage_LeadLeft_Right = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadLeft_Right_01")
+	rootImage_LeadLeft_Left = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadLeft_Left_01")
+	rootImage_LeadLeft_Straight = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadLeft_Straight_01")
+	rootImage_LeadRight_Right = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadRight_Right_01")
+	rootImage_LeadRight_Left = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadRight_Left_01")
+	rootImage_LeadRight_Straight = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadRight_Straight_01")
+	rootImage_LeadUp_Right = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Right_01")
+	rootImage_LeadUp_Left = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Left_01")
+	rootImage_LeadUp_Straight = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Straight_01")
 	
 	rootLeadingSprite = gfx.sprite.new(rootLeadingImageUp)
 	rootLeadingSprite:setCollideRect(0,0,rootLeadingSprite:getSize())
@@ -253,7 +278,7 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 			rootImageVertical:draw(previousX1, previousY1)
 		end
 
-		print("x: " ..x .. "x1: "  ..previousX1.. "x0: "  ..previousX0 .. "y: " ..y .. "y1: "  ..previousY1.. "y0: "  ..previousY0)
+		print("x: " ..x .. " x1: "  ..previousX1.. " x0: "  ..previousX0 .. " y: " ..y .. " y1: "  ..previousY1.. " y0: "  ..previousY0)
 
 		--cache previous values
 		previousSection = section
@@ -330,14 +355,40 @@ local barriers = {}
 --note: sprite rotation abandoned here sprite (collider doesnt follow):setRotation(angle, [scale, [yScale]])
 local buttonLastPressed = playdate.kButtonUp
 local function isPressedMove()
+
+	-- TYLER: I added conditions to play the root pointing for the direction the player is holding
 	if playdate.buttonJustPressed( playdate.kButtonUp ) then
 		buttonLastPressed = playdate.kButtonUp
+		if (x > previousX1) then
+			rootImage_LeadRight_Left:draw(x, y)
+		elseif ( y < previousY1) then
+			rootImage_LeadUp_Straight:draw(x,y)
+		else (x < previousX1) then
+			rootImage_LeadLeft_Right:draw(x,y)
 	elseif playdate.buttonJustPressed(playdate.kButtonDown) then
 		buttonLastPressed = playdate.kButtonDown
+		if (x > previousX1) then
+			rootImage_LeadRight_Right:draw(x, y)
+		elseif ( y > previousY1) then
+			rootImage_LeadDown_Straight:draw(x,y)
+		else (x < previousX1) then
+			rootImage_LeadLeft_Left:draw(x,y)
 	elseif playdate.buttonJustPressed(playdate.kButtonLeft) then
 		buttonLastPressed = playdate.kButtonLeft
+		if (y > previousX1) then
+			rootImage_LeadDown_Right:draw(x, y)
+		elseif ( y < previousY1) then
+			rootImage_LeadUp_Left:draw(x,y)
+		else (x < previousX1) then
+			rootImage_LeadLeft_Straight:draw(x,y)
 	elseif playdate.buttonJustPressed(playdate.kButtonRight) then
 		buttonLastPressed = playdate.kButtonRight
+		if (x > previousX1) then
+			rootImage_LeadRight_Straight:draw(x, y)
+		elseif ( y < previousY1) then
+			rootImage_LeadUp_Right:draw(x,y)
+		else (x < previousX1) then
+			rootImage_LeadLeft_Up:draw(x,y)
 	end
 end
 
