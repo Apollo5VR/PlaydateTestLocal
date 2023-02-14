@@ -5,12 +5,12 @@ local gfx <const> = pd.graphics
 
 class('sidewalk').extends(gfx.sprite)
 
-
+--adding some notes on this
 function sidewalk:init(x, y)
 local sidewalkImage = gfx.image.new("images/Pando/Cells/Rock/Sidewalk_01_cell") 
 	sidewalkSprite = gfx.sprite.new(sidewalkImage)
 	sidewalkSprite:setCenter(0,0)
-	sidewalkSprite:setCollideRect(0,0,sidewalkSprite:getSize())
+	sidewalkSprite:setCollideRect(0,0,sidewalkSprite:getSize().x, sidewalkSprite:getSize().y)
     sidewalkSprite:moveTo(x, y)
     sidewalkSprite:setTag(2)
 	sidewalkSprite:add()
