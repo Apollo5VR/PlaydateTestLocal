@@ -10,7 +10,7 @@ function GenerateGridObjects()
   --create this in init / initial setup of level game
   math.randomseed(playdate.getSecondsSinceEpoch())
 
-  --small comment to pickup PR and more
+  --small comment to pickup PR and more and still more
   grid = {}
     for i=1, grid_rows do
       grid[i] = {}
