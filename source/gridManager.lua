@@ -12,10 +12,10 @@ function GenerateGridObjects()
 
   --small comment to pickup PR and more and still more
   grid = {}
-    for i=1, grid_rows do
-      grid[i] = {}
-      for j=1, grid_columns do
-        grid[i][j] = math.random(0, 100)
+    for x=1, grid_rows do
+      grid[x] = {}
+      for y=1, grid_columns do
+        grid[x][y] = math.random(0, 100)
       end
     end
 
