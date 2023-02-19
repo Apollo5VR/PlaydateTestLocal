@@ -52,7 +52,6 @@ local rootLeadingImageDown
 local rootLeadingImageLeft
 
 -- Adding root point-turning
---[[
 local rootImage_LeadDown_Right
 local rootImage_LeadDown_Left
 local rootImage_LeadDown_Straight
@@ -65,7 +64,6 @@ local rootImage_LeadRight_Straight
 local rootImage_LeadUp_Right
 local rootImage_LeadUp_Left
 local rootImage_LeadUp_Straight
-]]
 
 local rootImageVertical
 local rootImageHorizontal
@@ -192,10 +190,10 @@ local function initialize()
 	rootImage_RightDown = gfx.image.new("images/Pando/Cells/Root/Root_Corner_RightDown_01")
 	rootImage_UpLeft = gfx.image.new("images/Pando/Cells/Root/Root_Corner_UpLeft_01")
 	rootImage_UpRight = gfx.image.new("images/Pando/Cells/Root/Root_Corner_UpRight_01")
-	--[[Root point-turning images
+	--Root point-turning images
 	rootImage_LeadDown_Right = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadDown_Right_01")
 	rootImage_LeadDown_Left = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadDown_Left_01")
-	rootImage_LeadDown_Straight = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadLeft_Straight_01")
+	rootImage_LeadDown_Straight = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadDown_Straight_01")
 	rootImage_LeadLeft_Right = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadLeft_Right_01")
 	rootImage_LeadLeft_Left = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadLeft_Left_01")
 	rootImage_LeadLeft_Straight = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadLeft_Straight_01")
@@ -205,7 +203,7 @@ local function initialize()
 	rootImage_LeadUp_Right = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Right_01")
 	rootImage_LeadUp_Left = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Left_01")
 	rootImage_LeadUp_Straight = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Straight_01")
-	]]
+
 
 	rootLeadingSprite = gfx.sprite.new(rootLeadingImageUp)
 	rootLeadingSprite:setCollideRect(0,0,rootLeadingSprite:getSize())
@@ -237,11 +235,11 @@ end
 
 --start the player in middle of grid
 local section, row, column = gridview:getSelection()
-previousSection = section
-previousX0 = 120
-previousX1 = 120
-previousY0 = 200
-previousY1 = 200
+local previousSection = section
+local previousX0 = 120
+local previousX1 = 120
+local previousY0 = 200
+local previousY1 = 200
 gridview:setSelection(section, 4, 8)
 
 --TODO relocate these vars / clean up
@@ -264,6 +262,21 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 	--math.randomseed(playdate.getSecondsSinceEpoch())
 	--randomVal = math.random(0, 100)
 	if selected then
+		--2.19 logic for adjusting raw directional image after having moved
+		if(y < previousY1) then
+			rootLeadingSprite:setImage(rootLeadingImageUp)
+		end
+		if(y > previousY1) then
+			rootLeadingSprite:setImage(rootLeadingImageDown)
+		end
+		if(x < previousX1) then
+			rootLeadingSprite:setImage(rootLeadingImageLeft)
+		end
+		if(x > previousX1) then
+			rootLeadingSprite:setImage(rootLeadingImageRight)
+		end
+
+
 		--use previous values to determine image to draw in previous cell	
 		if((x > previousX0 and x == previousX1 and y < previousY0 and y < previousY1) or (y > previousY0 and y == previousY1 and x < previousX0 and x < previousX1)) then --or (x < previousX0 and x < previousX1 and y < previousY0 and y < previousY1))
 			-- in cell [1] draw Root_Corner_RightDown_01
@@ -352,51 +365,6 @@ local barriers = {}
 
 --note: sprite rotation abandoned here sprite (collider doesnt follow):setRotation(angle, [scale, [yScale]])
 local buttonLastPressed = playdate.kButtonUp
-local function isPressedMove()
-
-	-- TYLER: I added conditions to play the root pointing for the direction the player is holding
-	if playdate.buttonJustPressed( playdate.kButtonUp ) then
-		buttonLastPressed = playdate.kButtonUp
-		--[[Root pointing conditionals
-		if (x > previousX1) then
-			rootImage_LeadRight_Left:draw(x, y)
-		elseif ( y < previousY1) then
-			rootImage_LeadUp_Straight:draw(x,y)
-		else (x < previousX1) then
-			rootImage_LeadLeft_Right:draw(x,y)
-		]]
-	elseif playdate.buttonJustPressed(playdate.kButtonDown) then
-		buttonLastPressed = playdate.kButtonDown
-		--[[Root pointing conditionals
-		if (x > previousX1) then
-			rootImage_LeadRight_Right:draw(x, y)
-		elseif ( y > previousY1) then
-			rootImage_LeadDown_Straight:draw(x,y)
-		else (x < previousX1) then
-			rootImage_LeadLeft_Left:draw(x,y)
-		]]
-	elseif playdate.buttonJustPressed(playdate.kButtonLeft) then
-		buttonLastPressed = playdate.kButtonLeft
-		--[[Root pointing conditionals
-		if (y > previousX1) then
-			rootImage_LeadDown_Right:draw(x, y)
-		elseif ( y < previousY1) then
-			rootImage_LeadUp_Left:draw(x,y)
-		else (x < previousX1) then
-			rootImage_LeadLeft_Straight:draw(x,y)
-		]]
-	elseif playdate.buttonJustPressed(playdate.kButtonRight) then
-		buttonLastPressed = playdate.kButtonRight
-		--[[Root pointing conditionals
-		if (x > previousX1) then
-			rootImage_LeadRight_Straight:draw(x, y)
-		elseif ( y < previousY1) then
-			rootImage_LeadUp_Right:draw(x,y)
-		else (x < previousX1) then
-			rootImage_LeadLeft_Up:draw(x,y)
-		]]
-	end
-end
 
 --local collisionSound = playdate.sound.sampleplayer.new("audio/Pando_Audio/Pando_Audio/SFX/Mp3/Rock Break True")
 local function doMove()
@@ -441,18 +409,61 @@ local function doMove()
 end
 
 local function isPressedRotate()
+	--currentPosition = rootLeadingSprite:getPosition()
+	--drawing starts in top left, going down increases y value, going right increases x value
+	--TODO eventually have to get rid of these magic 8 ,24 numbers, make debugging hard
+	local current, pressed, released = playdate.getButtonState()
+	if current ~= 0 then
+     --Some buttons are currently down
+	 currentX = rootLeadingSprite.x - 8 --to get its actual position (since whole map is adjusted by 8, 24)
+	 currentY = rootLeadingSprite.y - 24
+	 print("x, previouX1, y, previouY1 were " .. currentX  .." ".. previousX0 .." ".. currentY .." ".. previousY0)
+	end
+
 	if playdate.buttonIsPressed( playdate.kButtonUp ) then
-		rootLeadingSprite:setImage(rootLeadingImageUp)
+		--rootLeadingSprite:setImage(rootLeadingImageUp) --TODO moved to drawcell because we dont want the image to remain as below
 		buttonLastPressed = playdate.kButtonUp
+		--Root pointing conditionals
+		if (currentX > previousX0) then
+			rootLeadingSprite:setImage(rootImage_LeadRight_Left)
+		elseif ( currentY < previousY0) then
+			rootLeadingSprite:setImage(rootImage_LeadUp_Straight)
+		elseif (currentX < previousX0) then
+			rootLeadingSprite:setImage(rootImage_LeadLeft_Right)
+		end
 	elseif playdate.buttonIsPressed(playdate.kButtonDown) then
-		rootLeadingSprite:setImage(rootLeadingImageDown)
+		--rootLeadingSprite:setImage(rootLeadingImageDown)
 		buttonLastPressed = playdate.kButtonDown
+		--Root pointing conditionals
+		if (currentX > previousX0) then
+			rootLeadingSprite:setImage(rootImage_LeadRight_Right)
+		elseif ( currentY > previousY0) then
+			rootLeadingSprite:setImage(rootImage_LeadDown_Straight)
+		elseif (currentX < previousX0) then
+			rootLeadingSprite:setImage(rootImage_LeadLeft_Left)
+		end
 	elseif playdate.buttonIsPressed(playdate.kButtonLeft) then
-		rootLeadingSprite:setImage(rootLeadingImageLeft)
+		--rootLeadingSprite:setImage(rootLeadingImageLeft)
 		buttonLastPressed = playdate.kButtonLeft
+		--Root pointing conditionals
+		if (currentY > previousY0) then
+			rootLeadingSprite:setImage(rootImage_LeadDown_Right) 
+		elseif ( currentX < previousX0) then
+			rootLeadingSprite:setImage(rootImage_LeadLeft_Straight)
+		elseif (currentY < previousY0) then
+			rootLeadingSprite:setImage(rootImage_LeadUp_Left) 
+		end
 	elseif playdate.buttonIsPressed(playdate.kButtonRight) then
-		rootLeadingSprite:setImage(rootLeadingImageRight)
+		--rootLeadingSprite:setImage(rootLeadingImageRight)
 		buttonLastPressed = playdate.kButtonRight
+
+		if (currentY > previousY0) then
+			rootLeadingSprite:setImage(rootImage_LeadDown_Left) 
+		elseif ( currentX > previousX0) then
+			rootLeadingSprite:setImage(rootImage_LeadRight_Straight)
+		elseif (currentY < previousY0) then
+			rootLeadingSprite:setImage(rootImage_LeadUp_Right)
+		end
 	end
 end
 
