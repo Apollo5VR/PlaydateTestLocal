@@ -68,6 +68,9 @@ local previousY1
 
 local crankDifficulty = 1;
 
+local cranksNeeded = 1
+local currentCranks = 0
+
 local function resetTimer()
 	playTimer = playdate.timer.new(playTime, playTime, 0, playdate.easingFunctions.linear)
 end
@@ -265,12 +268,6 @@ function gridview:drawCell(section, row, column, selected, x, y, width, height)
 		previousY1 = y
 		
 		rootLeadingSprite:moveTo(x + 8, y + 24) --offset of grid in screen
-		--if you got here it means you cranked enough on the new settings
-		nutrientsCount -= nutrientsCost
-		--reset the cranks required to walking, until another barrier hit
-		nutrientsCost = noBarrierStr
-		print("nutrients returned to 1")
-
 
 	elseif (row == 1) then
 		if runOnce == 1 then
@@ -337,28 +334,41 @@ end
 --local collisionSound = playdate.sound.sampleplayer.new("audio/Pando_Audio/Pando_Audio/SFX/Mp3/Rock Break True")
 local function doMove()
 	local collisions = rootLeadingSprite:overlappingSprites()
+
+	print("nutrients before break: " .. nutrientsCost)
 	if(#collisions >=1) then	
 		--TODO - remove barriers array, no longer need
-		if (collisions[1]:getTag() == 2) and nutrientsCost ~= 3 then --collisions[0] == stoneSprite or collisions[1] == stoneSprite
+		if (collisions[1]:getTag() == 2) then --collisions[0] == stoneSprite or collisions[1] == stoneSprite
 			--make them work for it, the crank increase
 			--will lose nutrients when they are cranking
-				nutrientsCost = 3
-				print("nutrients set to 3")
+				cranksNeeded = 5
+				nutrientsCost = 10
+				print("cranks set to 5")
 				gfx.drawText("Keep Cranking!", 120, 25)
 				collisions[1].remove(collisions[1])
 				--collisionSound:play()
 			--if a collision dont continue till they beat the crank
 			--TODO - this logic not working right now, not increased nutrients cost not delaying
-			return
+			do return end
 		elseif (collisions[1]:getTag() == 1) then
 			--TODO remove magic numbers
 			nutrientsCount += 5
 			collisions[1].remove(collisions[1])
 			--collisionSound:play()
 		else	
-			
 		end
 	end
+
+	print("immediately after setting to 5, we still got here, why")
+		--TODO need to put this somewhere that doesnt happen immediately
+		--if you got here it means you cranked enough on the new settings
+		nutrientsCount -= nutrientsCost
+		--reset the cranks required to walking, until another barrier hit
+		nutrientsCost = noBarrierStr
+	
+		currentCranks = 0
+		cranksNeeded = 1
+		print("nutrients returned to 1")
 
 	switch (buttonLastPressed) {
 		[playdate.kButtonUp] = function()
@@ -488,17 +498,36 @@ function playdate.update()
 	--turns past each 120 degree increment. (Since we passed in a 3, each tick represents 360 ÷ 3 = 120 degrees.) 
 	--TODO will need to adjust crank tick param (smaller value requires more rotation) for barriers / rocks
 	--higher number is easier
-	crankDifficulty = 1 / nutrientsCost
+	crankDifficulty = 1--nutrientsCost --appears we cant go below 1 as a crank diff value
+	--print("crank diff: " .. crankDifficulty)
 	local crankTicks = playdate.getCrankTicks(crankDifficulty)
     if crankTicks == 1 then
-		print("crankDifficulty" ..nutrientsCost)
-		doMove()
-		if gridview.needsDisplay then
-			gfx.pushContext(gridviewImage)
-				gridview:drawInRect(0, 0, 400, 240)
-				gfx.popContext() --this might be what we can do to "go backwards"
-			gridviewSprite:setImage(gridviewImage)
+		currentCranks+=1
+		print("cranks are: " .. currentCranks)
+		print("cranks needed: " .. cranksNeeded)
+		if(currentCranks > cranksNeeded) then
+			currentCranks = 0
+			doMove()
+			if gridview.needsDisplay then
+				gfx.pushContext(gridviewImage)
+					gridview:drawInRect(0, 0, 400, 240)
+					gfx.popContext() --this might be what we can do to "go backwards"
+				gridviewSprite:setImage(gridviewImage)
+			end
 		end
+--[[
+		print("immediately after setting to 5, we still got here, why")
+		--TODO need to put this somewhere that doesnt happen immediately
+		--if you got here it means you cranked enough on the new settings
+		nutrientsCount -= nutrientsCost
+		--reset the cranks required to walking, until another barrier hit
+		nutrientsCost = noBarrierStr
+	
+		currentCranks = 0
+		cranksNeeded = 1
+		print("nutrients returned to 1")
+
+		--]]
 	--TODO for later anim logic
 	--elseif crankTicks == -1 then
 
