@@ -35,6 +35,8 @@ weakRockStr = 2
 mediumRockStr = 5
 strongRockStr = 10
 
+local barrierState = 0 --0 no barrier, 1 breaking barrier, 2 barrier broken
+
 local gridview = playdate.ui.gridview.new(24,24)
 
 gridview:setNumberOfColumns(16)
@@ -369,38 +371,37 @@ local function doMove()
 
 	print("nutrients before break: " .. nutrientsCost)
 	if(#collisions >=1) then	
-		--TODO - remove barriers array, no longer need
-		if (collisions[1]:getTag() == 2) then --collisions[0] == stoneSprite or collisions[1] == stoneSprite
-			--make them work for it, the crank increase
-			--will lose nutrients when they are cranking
-				cranksNeeded = 5
-				nutrientsCost = 10
-				print("cranks set to 5")
-				gfx.drawText("Keep Cranking!", 120, 25)
-				collisions[1].remove(collisions[1])
-				--collisionSound:play()
-			--if a collision dont continue till they beat the crank
-			--TODO - this logic not working right now, not increased nutrients cost not delaying
-			do return end
-		elseif (collisions[1]:getTag() == 1) then
-			--TODO remove magic numbers
-			nutrientsCount += 5
+		
+		if(barrierState == 1) then
+			return
+		elseif(barrierState == 2) then
 			collisions[1].remove(collisions[1])
-			--collisionSound:play()
-		else	
+			barrierState = 0
+		elseif(barrierState == 0) then
+			barrierState = 1
+
+			if (collisions[1]:getTag() == 2) then 
+				--make them work for it, the crank increase
+				--will lose nutrients when they are cranking
+					cranksNeeded = 5
+					nutrientsCost = 10
+					print("cranks set to 5")
+					--collisions[1].remove(collisions[1])
+					--collisionSound:play()
+				--if a collision dont continue till they beat the crank
+				do return end
+			elseif (collisions[1]:getTag() == 1) then
+				--TODO remove magic numbers
+				cranksNeeded = 2
+				nutrientsCount += 5
+				--collisions[1].remove(collisions[1])
+				--collisionSound:play()
+				do return end
+			end
 		end
 	end
 
 	print("immediately after setting to 5, we still got here, why")
-		--TODO need to put this somewhere that doesnt happen immediately
-		--if you got here it means you cranked enough on the new settings
-		nutrientsCount -= nutrientsCost
-		--reset the cranks required to walking, until another barrier hit
-		nutrientsCost = noBarrierStr
-	
-		currentCranks = 0
-		cranksNeeded = 1
-		print("nutrients returned to 1")
 
 	switch (buttonLastPressed) {
 		[playdate.kButtonUp] = function()
@@ -581,6 +582,17 @@ function playdate.update()
 		print("cranks are: " .. currentCranks)
 		print("cranks needed: " .. cranksNeeded)
 		if(currentCranks > cranksNeeded) then
+			if(barrierState == 1) then
+				barrierState = 2
+				print("NOT immediately after setting to 5, we still got here, why")
+				--TODO need to put this somewhere that doesnt happen immediately
+				--if you got here it means you cranked enough on the new settings
+				nutrientsCount -= nutrientsCost
+				--reset the cranks required to walking, until another barrier hit
+				nutrientsCost = noBarrierStr
+				cranksNeeded = 0
+			end
+			
 			currentCranks = 0
 			doMove()
 			if gridview.needsDisplay then
@@ -616,6 +628,10 @@ function playdate.update()
 	isPressedRotate()
 
 	gfx.drawText("ENERGY: " .. nutrientsCount, 45, 0)
+
+	if(barrierState == 1) then
+		gfx.drawText("Keep Cranking!", 175, 0)
+	end
 end
 
 
