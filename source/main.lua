@@ -75,6 +75,8 @@ local rootImage_UpLeft
 local rootImage_UpRight
 local dirtImage
 
+local treeImage
+
 --vars to help chose the image we should print in root trail
 local previousSection;
 local previousX0
@@ -209,6 +211,7 @@ local function initialize()
 	rootImage_LeadUp_Left = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Left_01")
 	rootImage_LeadUp_Straight = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Straight_01")
 
+	treeImage = gfx.image.new("images/Pando/Cells/Dirt/Large_Tree_Final")
 
 	rootLeadingSprite = gfx.sprite.new(rootLeadingImageUp)
 	rootLeadingSprite:setCollideRect(0,0,rootLeadingSprite:getSize())
@@ -380,7 +383,12 @@ local function doMove()
 		elseif(barrierState == 0) then
 			barrierState = 1
 
-			if (collisions[1]:getTag() == 2) then 
+			if (collisions[1]:getTag() == 3) then 
+					cranksNeeded = 5
+					nutrientsCost = 25
+					print("you gain tree, 25 cost")
+				do return end
+			elseif (collisions[1]:getTag() == 2) then 
 				--make them work for it, the crank increase
 				--will lose nutrients when they are cranking
 					cranksNeeded = 5
@@ -479,8 +487,10 @@ local function isPressedRotate()
 end
 
 function startScreenLaunch()
-	mySound = playdate.sound.fileplayer.new("audio/Pando_Audio/Pando_Audio/Music/Mp3/Pando Title Screen")
-	mySound:play()
+	if(mySound == nil) then
+		mySound = playdate.sound.fileplayer.new("audio/Pando_Audio/Pando_Audio/Music/Mp3/Pando Title Screen")
+		mySound:play()
+	end
 
 	assert(backgroundImage)
 	gfx.sprite.setBackgroundDrawingCallback(
@@ -588,6 +598,19 @@ function playdate.update()
 				--TODO need to put this somewhere that doesnt happen immediately
 				--if you got here it means you cranked enough on the new settings
 				nutrientsCount -= nutrientsCost
+
+				--tree reward
+				
+				if(nutrientsCost == 25) then
+					--print tree image
+					--treeImage:draw(120, 200)
+					playdate.graphics.sprite.removeAll()
+					playdate.graphics.clear()
+					backgroundImage = gfx.image.new("images/Pando/Cells/Dirt/Large_Tree_Final")
+					gameState = 3;
+					startScreenLaunch()
+				end
+
 				--reset the cranks required to walking, until another barrier hit
 				nutrientsCost = noBarrierStr
 				cranksNeeded = 0
