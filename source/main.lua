@@ -17,7 +17,7 @@ local boneSprite = nil
 playerSpeed = 5;
 
 playTimer = nil
-playTime = 300 * 1000
+playTime = 60 * 1000
 endTime = 0
 
 level = 0
@@ -90,6 +90,7 @@ local cranksNeeded = 1
 local currentCranks = 0
 
 local updateMessage = ""
+local lowerUpdateMessage = ""
 
 local function resetTimer()
 	playTimer = playdate.timer.new(playTime, playTime, endTime, playdate.easingFunctions.linear)
@@ -379,7 +380,7 @@ local function doMove()
 	if (#collisions >=1 and collisions[1]:getTag() == 3) then 
 		if(nutrientsCount < treeNutrientsMin) then
 			barrierState = 0
-			updateMessage = "need more nutrients"
+			updateMessage = "Need"..treeNutrientsMin.." Nutrients"
 			print("you need more nutrients to plant tree")
 			doSkipBarrierInteraction = true
 		end
@@ -400,7 +401,6 @@ local function doMove()
 				if(nutrientsCount >= treeNutrientsMin) then
 					nutrientsCost = treeNutrientsMin
 					cranksNeeded = 5
-					updateMessage = ""
 					print("you gain tree")
 					do return end
 				end
@@ -424,8 +424,6 @@ local function doMove()
 			end
 		end
 	end
-
-	print("immediately after setting to 5, we still got here, why")
 
 	switch (buttonLastPressed) {
 		[playdate.kButtonUp] = function()
@@ -526,11 +524,21 @@ resetTimer()
 startScreenLaunch()
 
 function playdate.update()
-	
 	gfx.sprite.update()
 	-- Call the update_timer function every second
 	playdate.timer.updateTimers()
 	gfx.drawText("Time: " .. math.ceil(playTimer.value/1000), 300, 0)
+
+	gfx.drawText("ENERGY: " .. nutrientsCount, 45, 0)
+
+	if(barrierState == 1) then
+		updateMessage = "Keep Cranking!"
+	elseif(updateMessage == "Keep Cranking!") then
+		updateMessage = ""
+	end
+
+	gfx.drawText(updateMessage, 150, 0)
+	gfx.drawText(lowerUpdateMessage, 60, 190)
 
 	if(gameState == -1 and playdate.buttonJustReleased(playdate.kButtonA)) then
 		gameState = 1
@@ -543,7 +551,7 @@ function playdate.update()
 		assert(backgroundImage)
 		print("Final Game State " .. gameState)
 		return;
-	elseif(gameState == 1 and playdate.buttonJustReleased(playdate.kButtonA)) then
+	elseif((gameState == 1) and playdate.buttonJustReleased(playdate.kButtonA)) then
 		--resetTimer() --for debuging purposes?
 		gameState = 2
 		print("Final Game State " .. gameState)
@@ -558,33 +566,26 @@ function playdate.update()
 			gridviewSprite:setImage(gridviewImage)
 		end
 		return;
+	elseif(gameState == 3 and playdate.buttonJustReleased(playdate.kButtonA)) then
+		gameState = 0
+		runOnce = 0
+		nutrientsCount = 2
+		playTime = 60
+		--playdate.restart("hi")
+		playdate.file.run("main.pdz")
+		return;
 	end
 
 	--TODO relocate to a more performant location
-	if playTimer.value <= 0 then
+	if playTimer.value <= 0 and gameState == gameplay then
 		--TODO - need to clear sprites and graphics?
-		backgroundImage:draw(0, 0)
-		gfx.drawText("You ran out of time!", 60, 190)
-		gfx.drawText("Go to Playdate menu and restart game", 60, 210)
-		--check game state for if we been here already
-
-		if gameState >= 3 then
-			return
-		else
-
-		--change local background to end screen
-		local allSprites = gfx.sprite.getAllSprites()
-		for index, sprite in ipairs(allSprites) do
-				sprite:remove()
-		end
-
+		--backgroundImage:draw(0, 0)
+		playdate.graphics.sprite.removeAll()
 		playdate.graphics.clear()
-		gameState = 3;
 		backgroundImage = gfx.image.new("images/Pando/MenuAssets/MainMenu_Blank_01")
-		assert(backgroundImage)
-		print("gamestate endB" .. gameState)
-		--nutrientsCount = 2
-		end
+		gameState = 3;
+		startScreenLaunch()
+		lowerUpdateMessage = "Out of time. 'A' Replay"
 	end
 
 	--dont handle below in game logic when in title etc
@@ -613,13 +614,14 @@ function playdate.update()
 				nutrientsCount -= nutrientsCost
 
 				--tree reward
-				if(nutrientsCost == treeNutrientsMin) then
+				if(nutrientsCost == treeNutrientsMin) then --treeNutrientsMin
 					--print tree image
 					playdate.graphics.sprite.removeAll()
 					playdate.graphics.clear()
 					backgroundImage = gfx.image.new("images/Pando/Cells/Dirt/Large_Tree_Final")
 					gameState = 3;
 					startScreenLaunch()
+					updateMessage = "YOU WIN! 'A' Replay"
 				end
 
 				--reset the cranks required to walking, until another barrier hit
@@ -660,16 +662,6 @@ function playdate.update()
 	end
 
 	isPressedRotate()
-
-	gfx.drawText("ENERGY: " .. nutrientsCount, 45, 0)
-
-	if(barrierState == 1) then
-		updateMessage = "Keep Cranking!"
-	elseif(updateMessage == "Keep Cranking!") then
-		updateMessage = ""
-	end
-
-	gfx.drawText(updateMessage, 175, 0)
 end
 
 
