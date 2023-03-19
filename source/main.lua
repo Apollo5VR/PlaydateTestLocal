@@ -17,7 +17,7 @@ local boneSprite = nil
 playerSpeed = 5;
 
 playTimer = nil
-playTime = 15 * 1000
+playTime = 60 * 1000
 endTime = 0
 
 level = 0
@@ -25,13 +25,13 @@ maxLevel = 5
 
 --pando vars
 local rootLeadingSprite = nil
-nutrientsCount = 100
-treeNutrientsMin = 50
+nutrientsCount = 2
+treeNutrientsMin = 5
 movementNutrientsMin = 1
-nutrientsCost = 1
+nutrientsCost = 0
 
-noBarrierStr = 1
-weakRockStr = 2
+noBarrierStr = 0
+weakRockStr = 1
 mediumRockStr = 5
 strongRockStr = 10
 
@@ -75,6 +75,8 @@ local rootImage_UpLeft
 local rootImage_UpRight
 local dirtImage
 
+local treeImage
+
 --vars to help chose the image we should print in root trail
 local previousSection;
 local previousX0
@@ -87,8 +89,11 @@ local crankDifficulty = 1;
 local cranksNeeded = 1
 local currentCranks = 0
 
+local updateMessage = ""
+local lowerUpdateMessage = ""
+
 local function resetTimer()
-	playTimer = playdate.timer.new(playTime, playTime, 0, playdate.easingFunctions.linear)
+	playTimer = playdate.timer.new(playTime, playTime, endTime, playdate.easingFunctions.linear)
 end
 
 --TODO unused, refactor to use appropriately
@@ -209,6 +214,7 @@ local function initialize()
 	rootImage_LeadUp_Left = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Left_01")
 	rootImage_LeadUp_Straight = gfx.image.new("images/Pando/Cells/Root/LeadingTurn/Root_LeadUp_Straight_01")
 
+	treeImage = gfx.image.new("images/Pando/Cells/Dirt/Large_Tree_Final")
 
 	rootLeadingSprite = gfx.sprite.new(rootLeadingImageUp)
 	rootLeadingSprite:setCollideRect(0,0,rootLeadingSprite:getSize())
@@ -369,8 +375,18 @@ local buttonLastPressed = playdate.kButtonUp
 local function doMove()
 	local collisions = rootLeadingSprite:overlappingSprites()
 
+	local doSkipBarrierInteraction = false
 	print("nutrients before break: " .. nutrientsCost)
-	if(#collisions >=1) then	
+	if (#collisions >=1 and collisions[1]:getTag() == 3) then 
+		if(nutrientsCount < treeNutrientsMin) then
+			barrierState = 0
+			updateMessage = "Need"..treeNutrientsMin.." Nutrients"
+			print("you need more nutrients to plant tree")
+			doSkipBarrierInteraction = true
+		end
+	end
+
+	if(doSkipBarrierInteraction == false and (#collisions >=1)) then	
 		
 		if(barrierState == 1) then
 			return
@@ -380,11 +396,19 @@ local function doMove()
 		elseif(barrierState == 0) then
 			barrierState = 1
 
-			if (collisions[1]:getTag() == 2) then 
+			--TODO - add a condition for having minimum of 25 nutrients to plant tree
+			if (collisions[1]:getTag() == 3) then 
+				if(nutrientsCount >= treeNutrientsMin) then
+					nutrientsCost = treeNutrientsMin
+					cranksNeeded = 5
+					print("you gain tree")
+					do return end
+				end
+			elseif (collisions[1]:getTag() == 2) then 
 				--make them work for it, the crank increase
 				--will lose nutrients when they are cranking
 					cranksNeeded = 5
-					nutrientsCost = 10
+					nutrientsCost = weakRockStr
 					print("cranks set to 5")
 					--collisions[1].remove(collisions[1])
 					--collisionSound:play()
@@ -393,15 +417,13 @@ local function doMove()
 			elseif (collisions[1]:getTag() == 1) then
 				--TODO remove magic numbers
 				cranksNeeded = 2
-				nutrientsCount += 5
+				nutrientsCount += 1
 				--collisions[1].remove(collisions[1])
 				--collisionSound:play()
 				do return end
 			end
 		end
 	end
-
-	print("immediately after setting to 5, we still got here, why")
 
 	switch (buttonLastPressed) {
 		[playdate.kButtonUp] = function()
@@ -479,8 +501,10 @@ local function isPressedRotate()
 end
 
 function startScreenLaunch()
-	mySound = playdate.sound.fileplayer.new("audio/Pando_Audio/Pando_Audio/Music/Mp3/Pando Title Screen")
-	mySound:play()
+	if(mySound == nil) then
+		mySound = playdate.sound.fileplayer.new("audio/Pando_Audio/Pando_Audio/Music/Mp3/Pando Title Screen")
+		mySound:play()
+	end
 
 	assert(backgroundImage)
 	gfx.sprite.setBackgroundDrawingCallback(
@@ -496,16 +520,25 @@ function startScreenLaunch()
 	)
 end
 
---function clearAllSprites()
-
---end
-
+resetTimer()
 startScreenLaunch()
 
 function playdate.update()
-	
 	gfx.sprite.update()
+	-- Call the update_timer function every second
 	playdate.timer.updateTimers()
+	gfx.drawText("Time: " .. math.ceil(playTimer.value/1000), 300, 0)
+
+	gfx.drawText("ENERGY: " .. nutrientsCount, 45, 0)
+
+	if(barrierState == 1) then
+		updateMessage = "Keep Cranking!"
+	elseif(updateMessage == "Keep Cranking!") then
+		updateMessage = ""
+	end
+
+	gfx.drawText(updateMessage, 150, 0)
+	gfx.drawText(lowerUpdateMessage, 60, 190)
 
 	if(gameState == -1 and playdate.buttonJustReleased(playdate.kButtonA)) then
 		gameState = 1
@@ -518,14 +551,14 @@ function playdate.update()
 		assert(backgroundImage)
 		print("Final Game State " .. gameState)
 		return;
-	elseif(gameState == 1 and playdate.buttonJustReleased(playdate.kButtonA)) then
-		resetTimer()
+	elseif((gameState == 1) and playdate.buttonJustReleased(playdate.kButtonA)) then
+		--resetTimer() --for debuging purposes?
 		gameState = 2
 		print("Final Game State " .. gameState)
 		playdate.graphics.clear()
 		backgroundImage = gfx.image.new(getBackgroundImage())
 		assert(backgroundImage)
-		initialize()
+		initialize() --TODO - causing timer to reset before game is over, fix
 		if gridview.needsDisplay then
 			gfx.pushContext(gridviewImage)
 				gridview:drawInRect(0, 0, 400, 240)
@@ -533,33 +566,26 @@ function playdate.update()
 			gridviewSprite:setImage(gridviewImage)
 		end
 		return;
+	elseif(gameState == 3 and playdate.buttonJustReleased(playdate.kButtonA)) then
+		gameState = 0
+		runOnce = 0
+		nutrientsCount = 2
+		playTime = 60
+		--playdate.restart("hi")
+		playdate.file.run("main.pdz")
+		return;
 	end
 
 	--TODO relocate to a more performant location
-	if nutrientsCount <= 0 then
+	if playTimer.value <= 0 and gameState == gameplay then
 		--TODO - need to clear sprites and graphics?
-		backgroundImage:draw(0, 0)
-		gfx.drawText("You ran out of nutrients!", 60, 190)
-		gfx.drawText("Go to Playdate menu and restart game", 60, 210)
-		--check game state for if we been here already
-
-		if gameState >= 3 then
-			return
-		else
-
-		--change local background to end screen
-		local allSprites = gfx.sprite.getAllSprites()
-		for index, sprite in ipairs(allSprites) do
-				sprite:remove()
-		end
-
+		--backgroundImage:draw(0, 0)
+		playdate.graphics.sprite.removeAll()
 		playdate.graphics.clear()
-		gameState = 3;
 		backgroundImage = gfx.image.new("images/Pando/MenuAssets/MainMenu_Blank_01")
-		assert(backgroundImage)
-		print("gamestate endB" .. gameState)
-		--nutrientsCount = 100
-		end
+		gameState = 3;
+		startScreenLaunch()
+		lowerUpdateMessage = "Out of time. 'A' Replay"
 	end
 
 	--dont handle below in game logic when in title etc
@@ -584,10 +610,20 @@ function playdate.update()
 		if(currentCranks > cranksNeeded) then
 			if(barrierState == 1) then
 				barrierState = 2
-				print("NOT immediately after setting to 5, we still got here, why")
-				--TODO need to put this somewhere that doesnt happen immediately
 				--if you got here it means you cranked enough on the new settings
 				nutrientsCount -= nutrientsCost
+
+				--tree reward
+				if(nutrientsCost == treeNutrientsMin) then --treeNutrientsMin
+					--print tree image
+					playdate.graphics.sprite.removeAll()
+					playdate.graphics.clear()
+					backgroundImage = gfx.image.new("images/Pando/Cells/Dirt/Large_Tree_Final")
+					gameState = 3;
+					startScreenLaunch()
+					updateMessage = "YOU WIN! 'A' Replay"
+				end
+
 				--reset the cranks required to walking, until another barrier hit
 				nutrientsCost = noBarrierStr
 				cranksNeeded = 0
@@ -626,12 +662,6 @@ function playdate.update()
 	end
 
 	isPressedRotate()
-
-	gfx.drawText("ENERGY: " .. nutrientsCount, 45, 0)
-
-	if(barrierState == 1) then
-		gfx.drawText("Keep Cranking!", 175, 0)
-	end
 end
 
 

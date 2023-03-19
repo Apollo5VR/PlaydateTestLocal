@@ -12,6 +12,6 @@ local sidewalkImage = gfx.image.new("images/Pando/Cells/Rock/Sidewalk_01_cell")
 	sidewalkSprite:setCenter(0,0)
 	sidewalkSprite:setCollideRect(0,0,sidewalkSprite:getSize())
     sidewalkSprite:moveTo(x, y)
-    sidewalkSprite:setTag(2)
+    sidewalkSprite:setTag(3)
 	sidewalkSprite:add()
 end
