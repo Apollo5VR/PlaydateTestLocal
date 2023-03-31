@@ -4,5 +4,5 @@ description=This is template project
 bundleID=com.organization.package
 version=0.0.1
 buildNumber=1
-pdxversion=11300
-buildtime=732503117
+pdxversion=11200
+buildtime=730148992
