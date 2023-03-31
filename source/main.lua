@@ -17,7 +17,7 @@ local boneSprite = nil
 playerSpeed = 5;
 
 playTimer = nil
-playTime = 60 * 1000
+playTime = 45 * 1000
 endTime = 0
 
 level = 0
@@ -512,10 +512,11 @@ function startScreenLaunch()
 			--in play mode
 			if(gameState == gameplay) then
 				backgroundImage:draw(8, 24)
+			else if(gameState == 1) then
+				backgroundImage:draw(56, 75)
 			else
 				backgroundImage:draw(0, 0)
 			end
-
 		end
 	)
 end
